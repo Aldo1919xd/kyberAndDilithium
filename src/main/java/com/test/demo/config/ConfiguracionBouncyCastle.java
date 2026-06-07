@@ -6,7 +6,7 @@ import jakarta.annotation.PostConstruct;
 import java.security.Security;
 
 @Configuration
-public class BouncyCastleConfig {
+public class ConfiguracionBouncyCastle {
 
     @PostConstruct
     public void init() {

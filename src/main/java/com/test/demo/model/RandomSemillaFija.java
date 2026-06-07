@@ -3,18 +3,18 @@ package com.test.demo.model;
 import java.security.SecureRandom;
 import java.util.Random;
 
-public class FixedRandom extends SecureRandom {
+public class RandomSemillaFija extends SecureRandom {
 
     private static final long serialVersionUID = 1L;
     private final Random fixed;
 
-    public FixedRandom(long seed) {
+    public RandomSemillaFija(long seed) {
         this.fixed = new Random(seed);
     }
 
     @Override
     public String getAlgorithm() {
-        return "FIXED";
+        return "FIJA";
     }
 
     @Override

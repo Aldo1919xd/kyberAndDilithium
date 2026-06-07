@@ -1,0 +1,98 @@
+@tailwind components;
+
+@layer components {
+  /* Layout */
+  .aplicacion { @apply min-h-[100dvh] bg-background text-foreground; }
+  .contenedor-app { @apply mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8; }
+  .encabezado-app { @apply grid gap-6 border-b border-border pb-6 lg:grid-cols-[1.3fr_0.7fr]; }
+  .titulo-app { @apply max-w-4xl text-4xl font-semibold leading-tight tracking-normal text-balance sm:text-5xl; }
+  .subtitulo-app { @apply mt-4 max-w-2xl text-base leading-7 text-muted-foreground; }
+  .grupo-insignias { @apply mb-4 flex flex-wrap items-center gap-2; }
+  .tarjeta-estadisticas { @apply self-end bg-foreground text-background; }
+  .cuadricula-estadisticas { @apply grid grid-cols-3 gap-4 p-5; }
+  .cuadricula-navegacion { @apply grid gap-2 sm:grid-cols-3; }
+  .grupo-seccion { @apply space-y-6; }
+  .grupo-formulario { @apply space-y-3; }
+  .fila-formulario { @apply grid gap-3 sm:grid-cols-2; }
+  .contenido-laboratorio { @apply space-y-4; }
+  .pestanias-laboratorio { @apply grid gap-2 md:grid-cols-1; }
+
+  /* View layouts */
+  .vista-director { @apply grid gap-6 lg:grid-cols-[0.95fr_1.05fr]; }
+  .vista-estudiante { @apply grid gap-6 lg:grid-cols-[0.9fr_1.1fr]; }
+
+  /* Flex helpers */
+  .fila-flexible { @apply flex flex-col gap-3 sm:flex-row; }
+  .fila-flexible-entre { @apply flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between; }
+
+  /* Section header */
+  .encabezado-seccion { @apply flex items-start gap-3; }
+  .icono-encabezado { @apply mt-0.5 flex h-9 w-9 items-center justify-center rounded-md border border-border bg-secondary; }
+  .texto-encabezado { @apply text-xl font-semibold tracking-normal; }
+  .descripcion-encabezado { @apply mt-1 max-w-2xl text-sm leading-6 text-muted-foreground; }
+
+  /* Crypto fingerprint */
+  .huella { @apply rounded-md border bg-black p-4; }
+  .huella-peligro { @apply border-white/25; }
+  .etiqueta-huella { @apply mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground; }
+  .valor-huella { @apply whitespace-pre-wrap break-all font-mono text-xs leading-5 text-foreground; }
+
+  /* Metric */
+  .valor-metrica { @apply font-mono text-2xl font-semibold; }
+  .etiqueta-metrica { @apply mt-1 text-xs text-background/60; }
+
+  /* Certificate card */
+  .vista-previa-vacia { @apply flex min-h-[300px] items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center text-sm text-muted-foreground; }
+  .encabezado-certificado { @apply flex items-center justify-between gap-4 border-b border-black/15 pb-5; }
+  .organizacion-cert { @apply font-mono text-xs text-black/50; }
+  .titulo-cert { @apply mt-1 text-2xl font-semibold text-black; }
+  .logo-cert { @apply flex h-14 w-14 items-center justify-center rounded-full border border-black text-sm font-semibold text-black; }
+  .cuerpo-cert { @apply py-8 text-center; }
+  .etiqueta-cert { @apply text-sm text-black/55; }
+  .estudiante-cert { @apply mt-3 text-3xl font-semibold tracking-normal text-black; }
+  .etiqueta-curso-cert { @apply mt-6 text-sm text-black/55; }
+  .curso-cert { @apply mt-2 text-xl font-medium text-black; }
+  .nota-cert { @apply mt-5 font-mono text-sm text-black/70; }
+  .pie-cert { @apply flex flex-col gap-4 border-t border-black/15 pt-5 sm:flex-row sm:items-center sm:justify-between; }
+  .fecha-cert { @apply text-sm font-medium text-black; }
+  .etiqueta-pie-cert { @apply mt-1 text-xs text-black/50; }
+  .validez-cert { @apply inline-flex items-center gap-2 rounded-md border border-black px-3 py-2 text-xs font-medium text-black; }
+  .accion-cert { @apply mt-5; }
+
+  /* Lab */
+  .leccion-lab { @apply rounded-lg border border-white bg-white p-5 text-black; }
+  .titulo-leccion { @apply text-sm font-semibold; }
+  .texto-leccion { @apply mt-2 text-sm leading-6 text-black/70; }
+
+  /* Step */
+  .paso { @apply grid gap-4 rounded-lg border border-border bg-secondary p-4 md:grid-cols-[3rem_1fr]; }
+  .numero-paso { @apply flex h-9 w-9 items-center justify-center rounded-md bg-foreground font-mono text-sm font-semibold text-background; }
+  .contenido-paso { @apply space-y-3; }
+
+  /* PQC panel */
+  .panel-pqc { @apply grid gap-4 border-t border-border pt-6 md:grid-cols-2; }
+
+  /* Empty state */
+  .estado-vacio { @apply rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground; }
+
+  /* Inbox */
+  .elemento-bandeja { @apply flex flex-col gap-3 rounded-lg border border-border bg-secondary p-4 sm:flex-row sm:items-center sm:justify-between; }
+  .lista-bandeja { @apply space-y-3; }
+
+  /* Button overrides */
+  .boton-navegacion { @apply h-12 justify-start; }
+  .boton-laboratorio { @apply h-11 justify-start; }
+
+  /* Icons */
+  .icono-pequeno { @apply h-4 w-4; }
+  .icono-mini { @apply h-3.5 w-3.5; }
+  .icono-girando { @apply h-4 w-4 animate-spin; }
+
+  /* Text */
+  .texto-medio { @apply font-medium; }
+  .texto-apagado { @apply text-sm text-muted-foreground; }
+  .texto-mono { @apply font-mono; }
+
+  /* Utilities */
+  .ancho-completo { @apply w-full; }
+}
