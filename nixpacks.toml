@@ -1,0 +1,5 @@
+[phases.setup]
+nixPkgs = ["jdk21", "maven"]
+
+[start]
+cmd = "java -Dserver.port=$PORT $JAVA_OPTS -jar target/*.war"

@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: InterVariable;
+  src: local("Inter"), local("Inter Variable");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 2%;
+    --foreground: 0 0% 96%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 96%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 3%;
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 66%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 0% 92%;
+    --destructive-foreground: 0 0% 4%;
+    --border: 0 0% 18%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 80%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+    background: hsl(var(--background));
+    text-rendering: geometricPrecision;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-width: 320px;
+    overflow-x: hidden;
+    background:
+      linear-gradient(90deg, hsl(var(--border) / 0.22) 1px, transparent 1px),
+      linear-gradient(180deg, hsl(var(--border) / 0.18) 1px, transparent 1px),
+      hsl(var(--background));
+    background-size: 72px 72px;
+    font-family: InterVariable, Inter, ui-sans-serif, system-ui, sans-serif;
+  }
+
+  button,
+  input,
+  select {
+    font: inherit;
+  }
+
+  select option {
+    background: #050505;
+    color: #f4f4f4;
+  }
+}
+
+@layer components {
+  .certificate {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    border: 1px solid rgb(0 0 0 / 0.14);
+    background:
+      linear-gradient(90deg, rgb(0 0 0 / 0.05) 1px, transparent 1px),
+      linear-gradient(180deg, rgb(0 0 0 / 0.05) 1px, transparent 1px),
+      #f5f5f5;
+    background-size: 22px 22px;
+    padding: 28px;
+    color: #050505;
+  }
+
+  .certificate::before {
+    content: "";
+    position: absolute;
+    inset: 10px;
+    border: 1px solid rgb(0 0 0 / 0.16);
+    pointer-events: none;
+  }
+
+  .toast-surface {
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 8px !important;
+    background: hsl(var(--card)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .toast-title {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .toast-description {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    background-size: 48px 48px;
+  }
+
+  .certificate {
+    padding: 22px;
+  }
+}
