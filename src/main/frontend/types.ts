@@ -8,6 +8,16 @@ export type Certificado = {
   fecha: string;
 };
 
+export type DatosCriptograficos = {
+  algoritmo: string;
+  operacion: string;
+  tipoLlave: string;
+  llaveHex: string;
+  entrada: string;
+  salida: string;
+  exito: boolean;
+};
+
 export type CertificadoFirmado = {
   id: string;
   certificado: Certificado;
@@ -26,6 +36,23 @@ export type CertificadoRecibido = {
   certificado: Certificado;
   firma?: string;
   valido: boolean;
+};
+
+export type RespuestaEmision = RespuestaApi & {
+  certificado?: CertificadoFirmado;
+  llavePublicaUniversidad?: string;
+};
+
+export type RespuestaEntrega = RespuestaApi & {
+  entrega?: ElementoBandeja;
+  llavePublicaEstudiante?: string;
+};
+
+export type RespuestaRecepcion = RespuestaApi & {
+  certificado?: Certificado;
+  firma?: string;
+  valido?: boolean;
+  llavePublicaUniversidad?: string;
 };
 
 export type RespuestaApi = {

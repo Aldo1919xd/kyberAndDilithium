@@ -82,6 +82,12 @@ public class ServicioUniversidad {
         return llavesPublicasEstudiantes.get(nombre);
     }
 
+    public String obtenerLlavePublicaEstudianteHex(String nombre) {
+        KyberPublicKeyParameters llave = llavesPublicasEstudiantes.get(nombre);
+        if (llave == null) return "";
+        return Hex.toHexString(llave.getEncoded());
+    }
+
     public synchronized Map<String, Object> firmarCertificado(DatosCertificado cert) throws Exception {
         byte[] bytesCert = UtilidadesCertificado.aBytesCanonicos(cert);
         byte[] firma = servicioFirma.firmar(bytesCert, llavePrivadaUniversidad);

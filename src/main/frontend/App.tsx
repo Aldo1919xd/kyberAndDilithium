@@ -13,7 +13,7 @@ import { PanelLaboratorio } from "@/components/PanelLaboratorio";
 import { PanelInfoPQC } from "@/components/PanelInfoPQC";
 import { peticionGet, peticionPost } from "@/api";
 import { hoy } from "@/lib/ayudantes";
-import type { Certificado, CertificadoFirmado, ElementoBandeja, CertificadoRecibido, EstadoLaboratorio, IdLaboratorio, RespuestaApi, Vista } from "@/types";
+import type { Certificado, CertificadoFirmado, DatosCriptograficos, ElementoBandeja, CertificadoRecibido, EstadoLaboratorio, IdLaboratorio, RespuestaApi, RespuestaEmision, RespuestaEntrega, RespuestaRecepcion, Vista } from "@/types";
 import "./styles.css";
 
 export default function App() {
@@ -29,6 +29,9 @@ export default function App() {
   const [nombreNuevoEstudiante, setNombreNuevoEstudiante] = useState("");
   const [formularioCertificado, setFormularioCertificado] = useState<Certificado>({ estudiante: "", curso: "", nota: 100, fecha: hoy() });
   const [estadoLaboratorio, setEstadoLaboratorio] = useState<EstadoLaboratorio>({ rngDebilActivo: false });
+  const [evidenciaDilithium, setEvidenciaDilithium] = useState<DatosCriptograficos | null>(null);
+  const [evidenciaKyber, setEvidenciaKyber] = useState<DatosCriptograficos | null>(null);
+  const [evidenciaVerificacion, setEvidenciaVerificacion] = useState<DatosCriptograficos | null>(null);
 
   const estadisticas = useMemo(
     () => ({
@@ -102,8 +105,18 @@ export default function App() {
     }
     setOperacionPendiente("issue");
     try {
-      const datos = await peticionPost<{ exito: boolean; certificado: CertificadoFirmado }>("/certificado/emitir", formularioCertificado);
-      setUltimoCertificadoFirmado(datos.certificado);
+      const datos = await peticionPost<RespuestaEmision>("/certificado/emitir", formularioCertificado);
+      setUltimoCertificadoFirmado(datos.certificado!);
+      setEvidenciaDilithium({
+        algoritmo: "Dilithium2",
+        operacion: "FIRMAR",
+        tipoLlave: "PRIVADA de Universidad",
+        llaveHex: datos.llavePublicaUniversidad || "",
+        entrada: `Datos del certificado (${formularioCertificado.estudiante}, ${formularioCertificado.curso})`,
+        salida: `Firma: ${datos.certificado!.firma}`,
+        exito: true,
+      });
+      setEvidenciaKyber(null);
       toast.success("Certificado firmado", { description: "Dilithium2 genero una firma valida." });
       await refrescarHistorial();
     } catch (error) {
@@ -117,11 +130,20 @@ export default function App() {
     const destinatario = item.certificado.estudiante;
     setOperacionPendiente(`deliver-${item.id}`);
     try {
-      const datos = await peticionPost<RespuestaApi>("/certificados/entregar", {
+      const datos = await peticionPost<RespuestaEntrega>("/certificados/entregar", {
         idCertificado: item.id,
         nombreEstudiante: destinatario,
       });
       if (!datos.exito) throw new Error(datos.error || "No se pudo entregar");
+      setEvidenciaKyber({
+        algoritmo: "Kyber",
+        operacion: "CIFRAR (ML-KEM + AES-GCM)",
+        tipoLlave: "PÚBLICA de Estudiante",
+        llaveHex: datos.llavePublicaEstudiante || "",
+        entrada: "Certificado firmado por Universidad",
+        salida: `Texto cifrado: ${datos.entrega?.textoCifrado || ""} · IV: ${datos.entrega?.iv || ""}`,
+        exito: true,
+      });
       toast.success("Certificado entregado", { description: "El contenido viajo cifrado con Kyber." });
       if (ultimoCertificadoFirmado?.id === item.id) setUltimoCertificadoFirmado({ ...item, estado: "entregado" });
       setEstudianteActual(destinatario);
@@ -161,12 +183,30 @@ export default function App() {
     if (!estudianteActual) return;
     setOperacionPendiente(`open-${item.id}`);
     try {
-      const datos = await peticionPost<CertificadoRecibido & RespuestaApi>("/certificados/recibir", {
+      const datos = await peticionPost<RespuestaRecepcion>("/certificados/recibir", {
         idCertificado: item.id,
         nombreEstudiante: estudianteActual,
       });
       if (!datos.exito) throw new Error(datos.error || "No se pudo abrir");
-      setUltimoCertificadoRecibido({ certificado: datos.certificado, firma: datos.firma, valido: datos.valido });
+      setUltimoCertificadoRecibido({ certificado: datos.certificado!, firma: datos.firma, valido: datos.valido! });
+      setEvidenciaKyber({
+        algoritmo: "Kyber",
+        operacion: "DESCIFRAR (ML-KEM + AES-GCM)",
+        tipoLlave: "PRIVADA de Estudiante",
+        llaveHex: "",
+        entrada: `Texto cifrado + IV de ${estudianteActual}`,
+        salida: `Certificado descifrado correctamente`,
+        exito: true,
+      });
+      setEvidenciaVerificacion({
+        algoritmo: "Dilithium2",
+        operacion: "VERIFICAR",
+        tipoLlave: "PÚBLICA de Universidad",
+        llaveHex: datos.llavePublicaUniversidad || "",
+        entrada: `Firma + datos del certificado`,
+        salida: datos.valido ? "Firma válida — contenido íntegro ✅" : "Firma inválida — contenido alterado ❌",
+        exito: datos.valido!,
+      });
       toast.success("Certificado descifrado", { description: datos.valido ? "Firma Dilithium2 verificada." : "La firma no coincide." });
     } catch (error) {
       toast.error("No se pudo abrir", { description: error instanceof Error ? error.message : "Error desconocido" });
@@ -271,6 +311,8 @@ export default function App() {
                 onEntregarUltimoCertificado={entregarUltimoCertificado}
                 onEntregarCertificado={entregarCertificado}
                 historial={historial}
+                evidenciaDilithium={evidenciaDilithium}
+                evidenciaKyber={evidenciaKyber}
               />
             </PanelAnimado>
           ) : null}
@@ -289,6 +331,8 @@ export default function App() {
                 bandeja={bandeja}
                 onRecibirCertificado={recibirCertificado}
                 ultimoCertificadoRecibido={ultimoCertificadoRecibido}
+                evidenciaKyber={evidenciaKyber}
+                evidenciaVerificacion={evidenciaVerificacion}
               />
             </PanelAnimado>
           ) : null}

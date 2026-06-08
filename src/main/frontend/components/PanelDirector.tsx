@@ -7,7 +7,8 @@ import { Select } from "@/components/ui/select";
 import { EncabezadoSeccion } from "@/components/EncabezadoSeccion";
 import { TarjetaCertificado } from "@/components/TarjetaCertificado";
 import { TablaHistorial } from "@/components/TablaHistorial";
-import type { Certificado, CertificadoFirmado } from "@/types";
+import { EvidenciaOperacionCriptografica } from "@/components/EvidenciaOperacionCriptografica";
+import type { Certificado, CertificadoFirmado, DatosCriptograficos } from "@/types";
 
 export function PanelDirector(props: {
   operacionPendiente: string;
@@ -22,6 +23,8 @@ export function PanelDirector(props: {
   onEntregarUltimoCertificado: () => void;
   onEntregarCertificado: (item: CertificadoFirmado) => void;
   historial: CertificadoFirmado[];
+  evidenciaDilithium: DatosCriptograficos | null;
+  evidenciaKyber: DatosCriptograficos | null;
 }) {
   return (
     <div className="vista-director">
@@ -105,6 +108,8 @@ export function PanelDirector(props: {
                 ) : null
               }
             />
+            {props.evidenciaDilithium ? <div className="espaciado-evidencia"><EvidenciaOperacionCriptografica datos={props.evidenciaDilithium} /></div> : null}
+            {props.evidenciaKyber ? <div className="espaciado-evidencia"><EvidenciaOperacionCriptografica datos={props.evidenciaKyber} /></div> : null}
           </CardContent>
         </Card>
 

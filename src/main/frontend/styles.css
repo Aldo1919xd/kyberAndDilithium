@@ -93,6 +93,23 @@
   .texto-apagado { @apply text-sm text-muted-foreground; }
   .texto-mono { @apply font-mono; }
 
+  /* Crypto evidence */
+  .evidencia-crypto { @apply rounded-lg border p-4 space-y-2 text-sm; }
+  .evidencia-exito { @apply border-emerald-500/30 bg-emerald-500/5; }
+  .evidencia-fallo { @apply border-red-500/30 bg-red-500/5; }
+  .encabezado-evidencia { @apply flex items-center justify-between mb-2; }
+  .grupo-algoritmo { @apply flex items-center gap-2; }
+  .texto-algoritmo { @apply font-semibold text-foreground; }
+  .separador-algoritmo { @apply text-muted-foreground; }
+  .texto-operacion { @apply text-muted-foreground font-mono text-xs uppercase tracking-wider; }
+  .icono-resultado { @apply flex; }
+  .linea-evidencia { @apply flex items-start gap-2 text-xs; }
+  .etiqueta-evidencia { @apply text-muted-foreground shrink-0 w-14; }
+  .valor-tipo-llave { @apply font-mono font-semibold text-foreground mr-1; }
+  .codigo-llave { @apply font-mono text-foreground bg-muted/50 px-1.5 py-0.5 rounded; }
+  .codigo-evidencia { @apply font-mono text-foreground break-all leading-5; }
+
   /* Utilities */
   .ancho-completo { @apply w-full; }
+  .espaciado-evidencia { @apply mt-3; }
 }

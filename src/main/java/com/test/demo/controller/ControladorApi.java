@@ -53,7 +53,9 @@ public class ControladorApi {
     @PostMapping("/certificado/emitir")
     public Map<String, Object> firmarCertificado(@RequestBody DatosCertificado cert) throws Exception {
         Map<String, Object> emitido = servicioUniversidad.firmarCertificado(cert);
-        return Map.of("exito", true, "certificado", emitido);
+        String llavePublica = servicioUniversidad.estaInicializada()
+            ? Hex.toHexString(servicioUniversidad.obtenerLlavePublicaUniversidad()) : "";
+        return Map.of("exito", true, "certificado", emitido, "llavePublicaUniversidad", llavePublica);
     }
 
     @GetMapping("/certificados")
@@ -70,7 +72,8 @@ public class ControladorApi {
         }
         try {
             Map<String, Object> entregado = servicioUniversidad.entregarCertificado(idCertificado, nombreEstudiante);
-            return Map.of("exito", true, "entrega", entregado);
+            String llavePublicaEstudiante = servicioUniversidad.obtenerLlavePublicaEstudianteHex(nombreEstudiante);
+            return Map.of("exito", true, "entrega", entregado, "llavePublicaEstudiante", llavePublicaEstudiante);
         } catch (IllegalArgumentException e) {
             return Map.of("exito", false, "error", e.getMessage());
         }
@@ -91,6 +94,8 @@ public class ControladorApi {
         try {
             Map<String, Object> resultado = servicioUniversidad.recibirDeBandeja(idCertificado, nombreEstudiante);
             resultado.put("exito", true);
+            resultado.put("llavePublicaUniversidad", servicioUniversidad.estaInicializada()
+                ? Hex.toHexString(servicioUniversidad.obtenerLlavePublicaUniversidad()) : "");
             return resultado;
         } catch (IllegalArgumentException e) {
             return Map.of("exito", false, "error", e.getMessage());

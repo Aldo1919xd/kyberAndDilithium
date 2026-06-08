@@ -8,8 +8,9 @@ import { EncabezadoSeccion } from "@/components/EncabezadoSeccion";
 import { TarjetaCertificado } from "@/components/TarjetaCertificado";
 import { ContenedorVacio } from "@/components/ContenedorVacio";
 import { HuellaCriptografica } from "@/components/HuellaCriptografica";
+import { EvidenciaOperacionCriptografica } from "@/components/EvidenciaOperacionCriptografica";
 import { acortarHex } from "@/lib/ayudantes";
-import type { ElementoBandeja, CertificadoRecibido } from "@/types";
+import type { DatosCriptograficos, ElementoBandeja, CertificadoRecibido } from "@/types";
 
 export function PanelEstudiante(props: {
   operacionPendiente: string;
@@ -20,6 +21,8 @@ export function PanelEstudiante(props: {
   bandeja: ElementoBandeja[];
   onRecibirCertificado: (item: ElementoBandeja) => void;
   ultimoCertificadoRecibido: CertificadoRecibido | null;
+  evidenciaKyber: DatosCriptograficos | null;
+  evidenciaVerificacion: DatosCriptograficos | null;
 }) {
   return (
     <div className="vista-estudiante">
@@ -81,6 +84,8 @@ export function PanelEstudiante(props: {
         <CardContent>
           <TarjetaCertificado cert={props.ultimoCertificadoRecibido?.certificado} piePagina="Descifrado con Kyber y verificado con Dilithium2" valido={props.ultimoCertificadoRecibido?.valido} />
           {props.ultimoCertificadoRecibido?.firma ? <HuellaCriptografica etiqueta="Firma Dilithium2" valor={acortarHex(props.ultimoCertificadoRecibido.firma, 52)} /> : null}
+          {props.evidenciaKyber ? <div className="espaciado-evidencia"><EvidenciaOperacionCriptografica datos={props.evidenciaKyber} /></div> : null}
+          {props.evidenciaVerificacion ? <div className="espaciado-evidencia"><EvidenciaOperacionCriptografica datos={props.evidenciaVerificacion} /></div> : null}
         </CardContent>
       </Card>
     </div>
