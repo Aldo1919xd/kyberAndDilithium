@@ -2,6 +2,7 @@ package com.test.demo.controller;
 
 import com.test.demo.model.DatosCertificado;
 import com.test.demo.model.RandomSemillaFija;
+import com.test.demo.service.ServicioHandshake;
 import com.test.demo.service.ServicioSimulacion;
 import com.test.demo.service.ServicioUniversidad;
 import org.bouncycastle.util.encoders.Hex;
@@ -19,10 +20,30 @@ public class ControladorApi {
 
     private final ServicioUniversidad servicioUniversidad;
     private final ServicioSimulacion servicioSimulacion;
+    private final ServicioHandshake servicioHandshake;
 
-    public ControladorApi(ServicioUniversidad servicioUniversidad, ServicioSimulacion servicioSimulacion) {
+    public ControladorApi(ServicioUniversidad servicioUniversidad, ServicioSimulacion servicioSimulacion, ServicioHandshake servicioHandshake) {
         this.servicioUniversidad = servicioUniversidad;
         this.servicioSimulacion = servicioSimulacion;
+        this.servicioHandshake = servicioHandshake;
+    }
+
+    // ===== Handshake =====
+    @PostMapping("/handshake/init")
+    public Map<String, Object> iniciarHandshake() {
+        return servicioHandshake.iniciarHandshake();
+    }
+
+    @PostMapping("/handshake/finalizar")
+    public Map<String, Object> finalizarHandshake(@RequestBody Map<String, Object> body) {
+        String handshakeId = (String) body.get("handshake_id");
+        byte[] ct = Hex.decodeStrict((String) body.get("ct"));
+        byte[] clientNonce = Hex.decodeStrict((String) body.get("client_nonce"));
+        try {
+            return servicioHandshake.finalizarHandshake(handshakeId, ct, clientNonce);
+        } catch (IllegalArgumentException e) {
+            return Map.of("exito", false, "error", e.getMessage());
+        }
     }
 
     // ===== Universidad =====
