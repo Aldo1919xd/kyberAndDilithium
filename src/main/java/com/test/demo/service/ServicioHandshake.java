@@ -1,7 +1,5 @@
 package com.test.demo.service;
 
-import com.test.demo.model.HandshakePendiente;
-import com.test.demo.model.InfoSesion;
 import jakarta.annotation.PostConstruct;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
@@ -9,15 +7,15 @@ import org.bouncycastle.crypto.params.HKDFParameters;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPrivateKeyParameters;
 import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPublicKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberKeyGenerationParameters;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberKeyPairGenerator;
 import org.bouncycastle.pqc.crypto.crystals.kyber.KyberKEMExtractor;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberParameters;
 import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPrivateKeyParameters;
 import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPublicKeyParameters;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -32,6 +30,7 @@ public class ServicioHandshake {
     private static final long TTL_HANDSHAKE = 30;
 
     private final ServicioFirmaDilithium servicioFirma;
+    private final ServicioCifradoKyber servicioCifrado;
     private final SecureRandom aleatorioSeguro = new SecureRandom();
 
     private DilithiumPublicKeyParameters pkSig;
@@ -40,8 +39,9 @@ public class ServicioHandshake {
     private final ConcurrentHashMap<String, HandshakePendiente> pendientes = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, InfoSesion> sesiones = new ConcurrentHashMap<>();
 
-    public ServicioHandshake(ServicioFirmaDilithium servicioFirma) {
+    public ServicioHandshake(ServicioFirmaDilithium servicioFirma, ServicioCifradoKyber servicioCifrado) {
         this.servicioFirma = servicioFirma;
+        this.servicioCifrado = servicioCifrado;
     }
 
     @PostConstruct
@@ -52,9 +52,7 @@ public class ServicioHandshake {
     }
 
     public Map<String, Object> iniciarHandshake() {
-        KyberKeyPairGenerator gen = new KyberKeyPairGenerator();
-        gen.init(new KyberKeyGenerationParameters(aleatorioSeguro, KyberParameters.kyber768));
-        AsymmetricCipherKeyPair kp = gen.generateKeyPair();
+        AsymmetricCipherKeyPair kp = servicioCifrado.generarParLlaves();
         KyberPublicKeyParameters pkKem = (KyberPublicKeyParameters) kp.getPublic();
         KyberPrivateKeyParameters skKem = (KyberPrivateKeyParameters) kp.getPrivate();
 
@@ -97,15 +95,25 @@ public class ServicioHandshake {
 
     public InfoSesion validarSesion(String sessionId) {
         InfoSesion sesion = sesiones.get(sessionId);
-        if (sesion == null) {
-            throw new IllegalArgumentException("Sesion invalida");
-        }
+        if (sesion == null) throw new IllegalArgumentException("Sesion invalida");
         if (sesion.estaExpirada(TTL_SESION)) {
             sesiones.remove(sessionId);
             throw new IllegalArgumentException("Sesion expirada");
         }
         sesiones.put(sessionId, sesion.renovar());
         return sesion;
+    }
+
+    public byte[] descifrarBody(byte[] sessionKey, byte[] iv, byte[] datosCifrados) throws Exception {
+        Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
+        c.init(Cipher.DECRYPT_MODE, new SecretKeySpec(sessionKey, "AES"), new GCMParameterSpec(128, iv));
+        return c.doFinal(datosCifrados);
+    }
+
+    public byte[] cifrarBody(byte[] sessionKey, byte[] iv, byte[] datos) throws Exception {
+        Cipher c = Cipher.getInstance("AES/GCM/NoPadding");
+        c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(sessionKey, "AES"), new GCMParameterSpec(128, iv));
+        return c.doFinal(datos);
     }
 
     private byte[] derivarClave(byte[] sharedSecret, byte[] salt) {
@@ -117,23 +125,35 @@ public class ServicioHandshake {
     }
 
     private static byte[] concatenar(byte[] a, byte[] b, byte[] c) {
-        byte[] resultado = new byte[a.length + b.length + c.length];
-        System.arraycopy(a, 0, resultado, 0, a.length);
-        System.arraycopy(b, 0, resultado, a.length, b.length);
-        System.arraycopy(c, 0, resultado, a.length + b.length, c.length);
-        return resultado;
+        byte[] r = new byte[a.length + b.length + c.length];
+        System.arraycopy(a, 0, r, 0, a.length);
+        System.arraycopy(b, 0, r, a.length, b.length);
+        System.arraycopy(c, 0, r, a.length + b.length, c.length);
+        return r;
     }
 
     private static byte[] concatenar(byte[] a, byte[] b) {
-        byte[] resultado = new byte[a.length + b.length];
-        System.arraycopy(a, 0, resultado, 0, a.length);
-        System.arraycopy(b, 0, resultado, a.length, b.length);
-        return resultado;
+        byte[] r = new byte[a.length + b.length];
+        System.arraycopy(a, 0, r, 0, a.length);
+        System.arraycopy(b, 0, r, a.length, b.length);
+        return r;
     }
 
     @Scheduled(fixedRate = 60000)
     public void limpiarSesiones() {
         sesiones.values().removeIf(s -> s.estaExpirada(TTL_SESION));
         pendientes.values().removeIf(HandshakePendiente::estaExpirada);
+    }
+
+    // --- inner records ---
+
+    public record InfoSesion(byte[] sessionKey, Instant creadaEn, Instant ultimoUso) {
+        InfoSesion(byte[] sessionKey) { this(sessionKey, Instant.now(), Instant.now()); }
+        InfoSesion renovar() { return new InfoSesion(sessionKey, creadaEn, Instant.now()); }
+        boolean estaExpirada(long ttl) { return Instant.now().isAfter(ultimoUso.plusSeconds(ttl)); }
+    }
+
+    record HandshakePendiente(KyberPrivateKeyParameters skKem, byte[] serverNonce, Instant creadaEn) {
+        boolean estaExpirada() { return Instant.now().isAfter(creadaEn.plusSeconds(30)); }
     }
 }

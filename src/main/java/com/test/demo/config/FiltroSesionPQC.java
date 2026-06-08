@@ -1,7 +1,6 @@
 package com.test.demo.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.test.demo.model.InfoSesion;
 import com.test.demo.service.ServicioHandshake;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ReadListener;
@@ -14,9 +13,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.ContentCachingResponseWrapper;
-import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,102 +44,80 @@ public class FiltroSesionPQC extends OncePerRequestFilter {
 
         String sessionId = request.getHeader("X-Session-ID");
         if (sessionId == null || sessionId.isEmpty()) {
-            chain(request, response, chain);
+            passthrough(request, response, chain);
             return;
         }
 
-        InfoSesion sesion;
-        try {
-            sesion = servicioHandshake.validarSesion(sessionId);
-        } catch (Exception e) {
-            response.setStatus(401);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"exito\":false,\"error\":\"Sesion invalida\"}");
-            return;
-        }
+        var sesion = validar(sessionId, response);
+        if (sesion == null) return;
 
         try {
             byte[] bodyBytes = request.getInputStream().readAllBytes();
             HttpServletRequest wrapped = request;
 
             if (bodyBytes.length > 0) {
-                String bodyStr = new String(bodyBytes, StandardCharsets.UTF_8);
                 @SuppressWarnings("unchecked")
-                Map<String, Object> bodyMap = mapper.readValue(bodyStr, Map.class);
-
+                Map<String, Object> bodyMap = mapper.readValue(new String(bodyBytes, StandardCharsets.UTF_8), Map.class);
                 byte[] iv = Hex.decodeStrict((String) bodyMap.get("iv"));
-                byte[] datosCifrados = Hex.decodeStrict((String) bodyMap.get("datos_cifrados"));
-
-                Cipher cifrador = Cipher.getInstance("AES/GCM/NoPadding");
-                cifrador.init(Cipher.DECRYPT_MODE,
-                    new SecretKeySpec(sesion.sessionKey(), "AES"),
-                    new GCMParameterSpec(128, iv));
-                byte[] plaintext = cifrador.doFinal(datosCifrados);
-
+                byte[] datos = Hex.decodeStrict((String) bodyMap.get("datos_cifrados"));
+                byte[] plaintext = servicioHandshake.descifrarBody(sesion.sessionKey(), iv, datos);
                 wrapped = new CachedBodyRequest(request, plaintext);
             }
 
-            ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
-            chain.doFilter(wrapped, responseWrapper);
+            ContentCachingResponseWrapper wrapper = new ContentCachingResponseWrapper(response);
+            chain.doFilter(wrapped, wrapper);
 
-            byte[] respBody = responseWrapper.getContentAsByteArray();
+            byte[] respBody = wrapper.getContentAsByteArray();
             if (respBody.length > 0) {
-                byte[] respIv = new byte[12];
-                aleatorio.nextBytes(respIv);
-
-                Cipher cifradorResp = Cipher.getInstance("AES/GCM/NoPadding");
-                cifradorResp.init(Cipher.ENCRYPT_MODE,
-                    new SecretKeySpec(sesion.sessionKey(), "AES"),
-                    new GCMParameterSpec(128, respIv));
-                byte[] cifrado = cifradorResp.doFinal(respBody);
+                byte[] iv = new byte[12];
+                aleatorio.nextBytes(iv);
+                byte[] cifrado = servicioHandshake.cifrarBody(sesion.sessionKey(), iv, respBody);
 
                 String json = mapper.writeValueAsString(Map.of(
-                    "iv", Hex.toHexString(respIv),
+                    "iv", Hex.toHexString(iv),
                     "datos_cifrados", Hex.toHexString(cifrado)
                 ));
-
-                response.setContentType("application/json");
                 byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
+                response.setContentType("application/json");
                 response.setContentLength(jsonBytes.length);
                 response.getOutputStream().write(jsonBytes);
             }
         } catch (Exception e) {
             response.setStatus(500);
             response.setContentType("application/json");
-            response.getWriter().write("{\"exito\":false,\"error\":\"Error de cifrado: " + e.getMessage() + "\"}");
+            response.getWriter().write("{\"exito\":false,\"error\":\"Error de cifrado\"}");
         }
     }
 
-    private void chain(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException {
+    private ServicioHandshake.InfoSesion validar(String sessionId, HttpServletResponse response) throws IOException {
         try {
-            chain.doFilter(request, response);
+            return servicioHandshake.validarSesion(sessionId);
         } catch (Exception e) {
-            throw new IOException(e);
+            response.setStatus(401);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"exito\":false,\"error\":\"Sesion invalida\"}");
+            return null;
         }
+    }
+
+    private void passthrough(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException {
+        try { chain.doFilter(request, response); }
+        catch (Exception e) { throw new IOException(e); }
     }
 
     private static class CachedBodyRequest extends HttpServletRequestWrapper {
         private final byte[] body;
-
-        CachedBodyRequest(HttpServletRequest request, byte[] body) {
-            super(request);
-            this.body = body;
-        }
-
-        @Override
-        public ServletInputStream getInputStream() {
+        CachedBodyRequest(HttpServletRequest request, byte[] body) { super(request); this.body = body; }
+        @Override public ServletInputStream getInputStream() {
             return new ServletInputStream() {
                 private final InputStream in = new ByteArrayInputStream(body);
-
                 @Override public int read() throws IOException { return in.read(); }
-                @Override public boolean isFinished() { return false; }
+                @Override public boolean isFinished() { return true; }
                 @Override public boolean isReady() { return true; }
-                @Override public void setReadListener(ReadListener listener) {}
+                @Override public void setReadListener(ReadListener l) {}
             };
         }
-
-        @Override
-        public java.io.BufferedReader getReader() {
+        @Override public java.io.BufferedReader getReader() {
             return new java.io.BufferedReader(new java.io.InputStreamReader(getInputStream(), StandardCharsets.UTF_8));
         }
     }
