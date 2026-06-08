@@ -1,5 +1,7 @@
 import { ml_kem768 } from "@noble/post-quantum/ml-kem.js";
 import { ml_dsa44 } from "@noble/post-quantum/ml-dsa.js";
+import { shake256 } from "@noble/hashes/sha3.js";
+import { concatBytes } from "@noble/hashes/utils.js";
 
 const API = "/api";
 
@@ -48,7 +50,10 @@ class SesionPQC {
     const serverNonce = hexToBytes(init.server_nonce);
     const handshakeId = init.handshake_id;
 
-    if (!ml_dsa44.verify(firma, concatenar(serverNonce, pkKem, new TextEncoder().encode(handshakeId)), pkSig)) {
+    const msg = concatenar(serverNonce, pkKem, new TextEncoder().encode(handshakeId));
+    const tr = shake256(pkSig, { dkLen: 64 });
+    const mu = shake256(concatBytes(tr, msg), { dkLen: 64 });
+    if (!ml_dsa44.internal.verify(firma, mu, pkSig, { externalMu: true })) {
       throw new Error("Firma del servidor invalida - posible ataque MITM");
     }
 

@@ -94,14 +94,18 @@ public class ServicioHandshake {
     }
 
     public InfoSesion validarSesion(String sessionId) {
-        InfoSesion sesion = sesiones.get(sessionId);
-        if (sesion == null) throw new IllegalArgumentException("Sesion invalida");
-        if (sesion.estaExpirada(TTL_SESION)) {
-            sesiones.remove(sessionId);
-            throw new IllegalArgumentException("Sesion expirada");
+        while (true) {
+            InfoSesion sesion = sesiones.get(sessionId);
+            if (sesion == null) throw new IllegalArgumentException("Sesion invalida");
+            if (sesion.estaExpirada(TTL_SESION)) {
+                sesiones.remove(sessionId);
+                throw new IllegalArgumentException("Sesion expirada");
+            }
+            InfoSesion renovada = sesion.renovar();
+            if (sesiones.replace(sessionId, sesion, renovada)) {
+                return renovada;
+            }
         }
-        sesiones.put(sessionId, sesion.renovar());
-        return sesion;
     }
 
     public byte[] descifrarBody(byte[] sessionKey, byte[] iv, byte[] datosCifrados) throws Exception {

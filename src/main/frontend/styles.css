@@ -109,28 +109,6 @@
   .codigo-llave { @apply font-mono text-foreground bg-muted/50 px-1.5 py-0.5 rounded; }
   .codigo-evidencia { @apply font-mono text-foreground break-all leading-5; }
 
-  /* Handshake overlay */
-  .overlay-handshake { @apply fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm p-4; }
-  .card-handshake { @apply w-full max-w-lg; }
-  .titulo-handshake { @apply text-xl font-semibold text-center; }
-  .subtitulo-handshake { @apply text-sm text-muted-foreground text-center mt-1; }
-  .lista-pasos-handshake { @apply space-y-3; }
-  .paso-handshake { @apply flex items-center gap-4 rounded-lg border border-border p-4 transition-colors duration-200; }
-  .paso-handshake.activo { @apply border-primary bg-primary/5; }
-  .paso-handshake.completado { @apply border-emerald-500/30 bg-emerald-500/5; }
-  .paso-handshake.error { @apply border-red-500/50 bg-red-500/10; }
-  .paso-icono { @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full; }
-  .paso-contenido { @apply min-w-0; }
-  .paso-label { @apply text-sm font-medium; }
-  .paso-desc { @apply mt-0.5 text-xs text-muted-foreground; }
-  .icono-activo { @apply text-primary; }
-  .icono-completado { @apply text-emerald-500; }
-  .icono-pendiente { @apply text-muted-foreground/40; }
-  .icono-error { @apply text-red-500; }
-  .error-handshake { @apply rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-600 mt-4; }
-  .evidencia-handshake { @apply mt-4; }
-  .insignia-sesion { @apply bg-emerald-500 text-white text-xs; }
-
   /* Utilities */
   .ancho-completo { @apply w-full; }
   .espaciado-evidencia { @apply mt-3; }

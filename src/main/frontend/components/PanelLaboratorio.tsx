@@ -1,6 +1,8 @@
 import { AnimatePresence } from "framer-motion";
-import { AlertTriangle, FileCheck, KeyRound, Loader2 } from "lucide-react";
+import { AlertTriangle, FileCheck, KeyRound, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { BotonLaboratorio } from "@/components/BotonLaboratorio";
 import { PlantillaLaboratorio } from "@/components/PlantillaLaboratorio";
 import { PasoLaboratorio } from "@/components/PasoLaboratorio";
@@ -17,6 +19,14 @@ export function PanelLaboratorio(props: {
   onActivarRngDebil: () => void;
   onRecuperarLlavePrivada: () => void;
   onFirmarCertificadoFalso: () => void;
+  onEntregarCertificadoFalso: () => void;
+  estudiantes: string[];
+  victimaSeleccionada: string;
+  onCambiarVictima: (valor: string) => void;
+  cursoFalso: string;
+  onCambiarCursoFalso: (valor: string) => void;
+  notaFalsa: number;
+  onCambiarNotaFalsa: (valor: number) => void;
 }) {
   return (
     <div className="grupo-seccion">
@@ -46,12 +56,33 @@ export function PanelLaboratorio(props: {
                 <HuellaCriptografica etiqueta="Clave privada regenerada" valor={acortarHex(props.estadoLaboratorio.llavePrivadaRecuperada, 64)} tono="peligro" />
                 <HuellaCriptografica etiqueta="Clave publica correspondiente" valor={acortarHex(props.estadoLaboratorio.llavePublicaRecuperada, 64)} />
               </PasoLaboratorio>
-              <PasoLaboratorio numero="3" titulo="Firma un certificado fabricado">
-                <Button variant="outline" onClick={props.onFirmarCertificadoFalso} disabled={!props.estadoLaboratorio.llavePrivadaRecuperada || props.operacionPendiente === "lab1-forge"}>
-                  <FileCheck className="icono-pequeno" />
-                  Firmar falso
-                </Button>
+              <PasoLaboratorio numero="3" titulo="Falsifica un certificado contra una victima real">
+                <div className="fila-flexible">
+                  <Select value={props.victimaSeleccionada} onChange={(evento) => props.onCambiarVictima(evento.target.value)}>
+                    <option value="">Selecciona victima</option>
+                    {props.estudiantes.map((estudiante) => (
+                      <option key={estudiante} value={estudiante}>{estudiante}</option>
+                    ))}
+                  </Select>
+                  <Input placeholder="Curso falso" value={props.cursoFalso} onChange={(evento) => props.onCambiarCursoFalso(evento.target.value)} />
+                  <Input type="number" min={0} max={100} value={props.notaFalsa} onChange={(evento) => props.onCambiarNotaFalsa(Number(evento.target.value))} className="w-24 shrink-0" />
+                </div>
+                <div className="fila-flexible">
+                  <Button variant="outline" onClick={props.onFirmarCertificadoFalso} disabled={!props.estadoLaboratorio.llavePrivadaRecuperada || !props.victimaSeleccionada || props.operacionPendiente === "lab1-forge"}>
+                    {props.operacionPendiente === "lab1-forge" ? <Loader2 className="icono-girando" /> : <FileCheck className="icono-pequeno" />}
+                    Firmar falso
+                  </Button>
+                  <Button variant="destructive" onClick={props.onEntregarCertificadoFalso} disabled={!props.estadoLaboratorio.firmaFalsificada || props.operacionPendiente === "lab1-deliver-forged"}>
+                    {props.operacionPendiente === "lab1-deliver-forged" ? <Loader2 className="icono-girando" /> : <Send className="icono-pequeno" />}
+                    Entregar a bandeja
+                  </Button>
+                </div>
                 <HuellaCriptografica etiqueta="Firma resultante" valor={acortarHex(props.estadoLaboratorio.firmaFalsificada, 64)} tono="peligro" />
+                {props.estadoLaboratorio.entregaFalsaExitosa ? (
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600 mt-2">
+                    Certificado falso entregado a {props.victimaSeleccionada}. Cambia a la vista Estudiante para abrirlo.
+                  </div>
+                ) : null}
               </PasoLaboratorio>
             </PlantillaLaboratorio>
           </PanelAnimado>

@@ -6,6 +6,8 @@ import com.test.demo.service.ServicioHandshake;
 import com.test.demo.service.ServicioSimulacion;
 import com.test.demo.service.ServicioUniversidad;
 import org.bouncycastle.util.encoders.Hex;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +19,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 public class ControladorApi {
+
+    private static final Logger log = LoggerFactory.getLogger(ControladorApi.class);
 
     private final ServicioUniversidad servicioUniversidad;
     private final ServicioSimulacion servicioSimulacion;
@@ -46,16 +50,7 @@ public class ControladorApi {
         }
     }
 
-    // ===== Universidad =====
-    @GetMapping("/universidad/estado")
-    public Map<String, Object> estadoUniversidad() {
-        return Map.of(
-            "inicializada", servicioUniversidad.estaInicializada(),
-            "llavePublica", servicioUniversidad.estaInicializada()
-                ? Hex.toHexString(servicioUniversidad.obtenerLlavePublicaUniversidad()) : ""
-        );
-    }
-
+    // ===== Estudiantes =====
     @PostMapping("/estudiante/crear")
     public Map<String, Object> crearEstudiante(@RequestBody Map<String, String> cuerpo) {
         String nombre = cuerpo.get("nombre");
@@ -121,6 +116,7 @@ public class ControladorApi {
         } catch (IllegalArgumentException e) {
             return Map.of("exito", false, "error", e.getMessage());
         } catch (Exception e) {
+            log.error("Error al recibir certificado {} para {}", idCertificado, nombreEstudiante, e);
             return Map.of(
                 "exito", false,
                 "error", "No se pudo descifrar este certificado con la identidad seleccionada."
@@ -152,6 +148,15 @@ public class ControladorApi {
     @PostMapping("/laboratorios/1/firmar-certificado-falso")
     public Map<String, Object> firmarCertificadoFalso(@RequestBody DatosCertificado cert) throws Exception {
         return servicioSimulacion.firmarCertificadoFalso(cert);
+    }
+
+    @PostMapping("/laboratorios/1/entregar-falso")
+    public Map<String, Object> entregarCertificadoFalso(@RequestBody DatosCertificado cert) throws Exception {
+        try {
+            return servicioSimulacion.entregarCertificadoFalso(cert);
+        } catch (IllegalArgumentException e) {
+            return Map.of("exito", false, "error", e.getMessage());
+        }
     }
 
 }

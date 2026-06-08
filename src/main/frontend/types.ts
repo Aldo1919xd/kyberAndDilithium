@@ -65,4 +65,5 @@ export type EstadoLaboratorio = {
   llavePrivadaRecuperada?: string;
   llavePublicaRecuperada?: string;
   firmaFalsificada?: string;
+  entregaFalsaExitosa?: boolean;
 };

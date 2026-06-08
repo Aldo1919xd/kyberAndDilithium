@@ -21,4 +21,8 @@ public class UtilidadesCertificado {
     public static DatosCertificado desdeMapa(Map<String, Object> map) {
         return MAPPER.convertValue(map, DatosCertificado.class);
     }
+
+    public static DatosCertificado desdeBytes(byte[] bytes) throws Exception {
+        return MAPPER.readValue(bytes, DatosCertificado.class);
+    }
 }

@@ -12,6 +12,7 @@ import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPublicKeyParameters;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,10 +79,6 @@ public class ServicioUniversidad {
         return llavesPublicasEstudiantes.keySet();
     }
 
-    public KyberPublicKeyParameters obtenerLlavePublicaEstudiante(String nombre) {
-        return llavesPublicasEstudiantes.get(nombre);
-    }
-
     public String obtenerLlavePublicaEstudianteHex(String nombre) {
         KyberPublicKeyParameters llave = llavesPublicasEstudiantes.get(nombre);
         if (llave == null) return "";
@@ -89,6 +86,9 @@ public class ServicioUniversidad {
     }
 
     public synchronized Map<String, Object> firmarCertificado(DatosCertificado cert) throws Exception {
+        if (!llavesPublicasEstudiantes.containsKey(cert.estudiante())) {
+            throw new IllegalArgumentException("El estudiante '" + cert.estudiante() + "' no esta registrado. Creelo primero.");
+        }
         byte[] bytesCert = UtilidadesCertificado.aBytesCanonicos(cert);
         byte[] firma = servicioFirma.firmar(bytesCert, llavePrivadaUniversidad);
         String id = UUID.randomUUID().toString();
@@ -146,7 +146,7 @@ public class ServicioUniversidad {
         elementoBandeja.put("datosCifrados", Hex.toHexString(paquete.datosCifrados()));
         elementoBandeja.put("estado", "entregado");
 
-        bandejas.computeIfAbsent(nombreEstudiante, k -> new ArrayList<>()).add(elementoBandeja);
+        insertarEnBandeja(nombreEstudiante, elementoBandeja);
         encontrado.put("estado", "entregado");
 
         return elementoBandeja;
@@ -179,13 +179,21 @@ public class ServicioUniversidad {
 
         @SuppressWarnings("unchecked")
         DatosCertificado cert = UtilidadesCertificado.desdeMapa((Map<String, Object>) encontrado.get("certificado"));
+
+        DatosCertificado certDescifrado = UtilidadesCertificado.desdeBytes(bytesDescifrados);
+        boolean integridad = certDescifrado.equals(cert);
+
         boolean valido = verificarFirmaCertificado(cert, firma);
 
         Map<String, Object> resultado = new LinkedHashMap<>();
         resultado.put("certificado", encontrado.get("certificado"));
         resultado.put("firma", encontrado.get("firma"));
-        resultado.put("valido", valido);
+        resultado.put("valido", valido && integridad);
         return resultado;
+    }
+
+    public void insertarEnBandeja(String nombreEstudiante, Map<String, Object> elemento) {
+        bandejas.computeIfAbsent(nombreEstudiante, k -> new CopyOnWriteArrayList<>()).add(elemento);
     }
 
     public PaqueteCifrado cifrarParaEstudiante(String nombreEstudiante, DatosCertificado cert) throws Exception {

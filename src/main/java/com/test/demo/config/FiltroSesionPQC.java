@@ -112,7 +112,7 @@ public class FiltroSesionPQC extends OncePerRequestFilter {
             return new ServletInputStream() {
                 private final InputStream in = new ByteArrayInputStream(body);
                 @Override public int read() throws IOException { return in.read(); }
-                @Override public boolean isFinished() { return true; }
+                @Override public boolean isFinished() { try { return in.available() == 0; } catch (IOException e) { return true; } }
                 @Override public boolean isReady() { return true; }
                 @Override public void setReadListener(ReadListener l) {}
             };

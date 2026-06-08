@@ -29,6 +29,9 @@ export default function App() {
   const [nombreNuevoEstudiante, setNombreNuevoEstudiante] = useState("");
   const [formularioCertificado, setFormularioCertificado] = useState<Certificado>({ estudiante: "", curso: "", nota: 100, fecha: hoy() });
   const [estadoLaboratorio, setEstadoLaboratorio] = useState<EstadoLaboratorio>({ rngDebilActivo: false });
+  const [victimaSeleccionada, setVictimaSeleccionada] = useState("");
+  const [cursoFalso, setCursoFalso] = useState("Certificado falsificado");
+  const [notaFalsa, setNotaFalsa] = useState(100);
   const [evidenciaDilithium, setEvidenciaDilithium] = useState<DatosCriptograficos | null>(null);
   const [evidenciaKyber, setEvidenciaKyber] = useState<DatosCriptograficos | null>(null);
   const [evidenciaVerificacion, setEvidenciaVerificacion] = useState<DatosCriptograficos | null>(null);
@@ -72,7 +75,7 @@ export default function App() {
 
   useEffect(() => {
     Promise.all([refrescarEstudiantes(), refrescarHistorial(), refrescarEstadoLaboratorio()]).catch((error) => {
-      toast.error("No se pudo cargar el estado inicial", { description: error.message });
+      toast.error("No se pudo cargar el estado inicial", { description: error instanceof Error ? error.message : "Error desconocido" });
     });
   }, []);
 
@@ -242,16 +245,41 @@ export default function App() {
   }
 
   async function firmarCertificadoFalso() {
+    if (!victimaSeleccionada) {
+      toast.error("Selecciona una victima");
+      return;
+    }
     setOperacionPendiente("lab1-forge");
-    const cert = { estudiante: "Atacante", curso: "Certificado fabricado", nota: 100, fecha: hoy() };
+    const cert = { estudiante: victimaSeleccionada, curso: cursoFalso, nota: notaFalsa, fecha: hoy() };
     try {
       const datos = await peticionPost<{ valido: boolean; firma: string }>("/laboratorios/1/firmar-certificado-falso", cert);
-      setEstadoLaboratorio((actual) => ({ ...actual, firmaFalsificada: datos.firma }));
+      setEstadoLaboratorio((actual) => ({ ...actual, firmaFalsificada: datos.firma, entregaFalsaExitosa: false }));
       toast.warning(datos.valido ? "Certificado falso aceptado" : "La falsificacion fallo", {
         description: "La firma se genero con la clave regenerada.",
       });
     } catch (error) {
       toast.error("Firma falsa fallida", { description: error instanceof Error ? error.message : "Error desconocido" });
+    } finally {
+      setOperacionPendiente("");
+    }
+  }
+
+  async function entregarCertificadoFalso() {
+    if (!victimaSeleccionada) {
+      toast.error("Selecciona una victima");
+      return;
+    }
+    setOperacionPendiente("lab1-deliver-forged");
+    const cert = { estudiante: victimaSeleccionada, curso: cursoFalso, nota: notaFalsa, fecha: hoy() };
+    try {
+      const datos = await peticionPost<{ exito: boolean; valido?: boolean; firma?: string; error?: string }>("/laboratorios/1/entregar-falso", cert);
+      if (!datos.exito) throw new Error(datos.error || "No se pudo entregar");
+      setEstadoLaboratorio((actual) => ({ ...actual, firmaFalsificada: datos.firma, entregaFalsaExitosa: true }));
+      toast.warning("Certificado falso entregado", {
+        description: `${victimaSeleccionada} ahora tiene un certificado falsificado en su bandeja.`,
+      });
+    } catch (error) {
+      toast.error("Entrega fallida", { description: error instanceof Error ? error.message : "Error desconocido" });
     } finally {
       setOperacionPendiente("");
     }
@@ -346,6 +374,14 @@ export default function App() {
                 onActivarRngDebil={activarRngDebil}
                 onRecuperarLlavePrivada={recuperarLlavePrivada}
                 onFirmarCertificadoFalso={firmarCertificadoFalso}
+                onEntregarCertificadoFalso={entregarCertificadoFalso}
+                estudiantes={estudiantes}
+                victimaSeleccionada={victimaSeleccionada}
+                onCambiarVictima={setVictimaSeleccionada}
+                cursoFalso={cursoFalso}
+                onCambiarCursoFalso={setCursoFalso}
+                notaFalsa={notaFalsa}
+                onCambiarNotaFalsa={setNotaFalsa}
               />
             </PanelAnimado>
           ) : null}

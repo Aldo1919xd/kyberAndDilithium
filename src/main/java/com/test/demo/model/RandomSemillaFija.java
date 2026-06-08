@@ -23,6 +23,36 @@ public class RandomSemillaFija extends SecureRandom {
     }
 
     @Override
+    public int nextInt() {
+        return fixed.nextInt();
+    }
+
+    @Override
+    public int nextInt(int bound) {
+        return fixed.nextInt(bound);
+    }
+
+    @Override
+    public long nextLong() {
+        return fixed.nextLong();
+    }
+
+    @Override
+    public float nextFloat() {
+        return fixed.nextFloat();
+    }
+
+    @Override
+    public double nextDouble() {
+        return fixed.nextDouble();
+    }
+
+    @Override
+    public synchronized double nextGaussian() {
+        return fixed.nextGaussian();
+    }
+
+    @Override
     public byte[] generateSeed(int numBytes) {
         byte[] b = new byte[numBytes];
         fixed.nextBytes(b);

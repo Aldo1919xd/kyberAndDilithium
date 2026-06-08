@@ -101,8 +101,8 @@ export function PanelDirector(props: {
               valido
               accion={
                 props.ultimoCertificadoFirmado && props.ultimoCertificadoFirmado.estado !== "entregado" ? (
-                  <Button className="ancho-completo" onClick={props.onEntregarUltimoCertificado} disabled={props.operacionPendiente === "deliver"}>
-                    {props.operacionPendiente === "deliver" ? <Loader2 className="icono-girando" /> : <Send className="icono-pequeno" />}
+                  <Button className="ancho-completo" onClick={props.onEntregarUltimoCertificado} disabled={props.ultimoCertificadoFirmado !== null && props.operacionPendiente === `deliver-${props.ultimoCertificadoFirmado.id}`}>
+                    {props.ultimoCertificadoFirmado !== null && props.operacionPendiente === `deliver-${props.ultimoCertificadoFirmado.id}` ? <Loader2 className="icono-girando" /> : <Send className="icono-pequeno" />}
                     Entregar a estudiante
                   </Button>
                 ) : null
