@@ -2,6 +2,7 @@ import { AnimatePresence } from "framer-motion";
 import { AlertTriangle, FileCheck, KeyRound, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Select } from "@/components/ui/select";
 import { BotonLaboratorio } from "@/components/BotonLaboratorio";
 import { PlantillaLaboratorio } from "@/components/PlantillaLaboratorio";
@@ -16,7 +17,7 @@ export function PanelLaboratorio(props: {
   onCambiarLaboratorio: (valor: IdLaboratorio) => void;
   operacionPendiente: string;
   estadoLaboratorio: EstadoLaboratorio;
-  onActivarRngDebil: () => void;
+  onToggleEntropiaPredecible: (activo: boolean) => void;
   onRecuperarLlavePrivada: () => void;
   onFirmarCertificadoFalso: () => void;
   onEntregarCertificadoFalso: () => void;
@@ -31,25 +32,38 @@ export function PanelLaboratorio(props: {
   return (
     <div className="grupo-seccion">
       <div className="pestanias-laboratorio">
-        <BotonLaboratorio activo={props.laboratorioActivo === "lab1"} etiqueta="RNG debil" onClick={() => props.onCambiarLaboratorio("lab1")} />
+        <BotonLaboratorio activo={props.laboratorioActivo === "lab1"} etiqueta="Entropia en Dilithium" onClick={() => props.onCambiarLaboratorio("lab1")} />
       </div>
 
       <AnimatePresence mode="wait">
         {props.laboratorioActivo === "lab1" ? (
           <PanelAnimado key="lab1">
             <PlantillaLaboratorio
-              titulo="RNG debil"
-              descripcion="Una semilla fija permite regenerar llaves privadas y producir firmas aparentemente autenticas."
+              titulo="Ataque por entropia predecible"
+              descripcion="Dilithium2 genera sus claves a partir de una fuente de aleatoriedad. Si esa fuente es predecible (semilla fija), la misma clave privada se regenera siempre, permitiendo falsificar firmas."
               leccion="La resistencia post-cuantica no compensa una fuente de entropia predecible."
             >
-              <PasoLaboratorio numero="1" titulo="Reinicializa la universidad con semilla 12345">
-                <Button variant={props.estadoLaboratorio.rngDebilActivo ? "secondary" : "destructive"} onClick={props.onActivarRngDebil} disabled={props.operacionPendiente === "lab1-activate"}>
-                  {props.operacionPendiente === "lab1-activate" ? <Loader2 className="icono-girando" /> : <AlertTriangle className="icono-pequeno" />}
-                  {props.estadoLaboratorio.rngDebilActivo ? "RNG debil activo" : "Activar RNG debil"}
-                </Button>
+              <PasoLaboratorio numero="1" titulo="Activa la entropia predecible">
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={props.estadoLaboratorio.entropiaPredecible}
+                    onCheckedChange={props.onToggleEntropiaPredecible}
+                    disabled={props.operacionPendiente === "lab1-toggle"}
+                  />
+                  <span className="text-sm text-foreground">
+                    {props.estadoLaboratorio.entropiaPredecible
+                      ? "Entropia predecible activa (seed 12345)"
+                      : "Usar entropia predecible (seed 12345)"}
+                  </span>
+                  {props.operacionPendiente === "lab1-toggle" ? <Loader2 className="icono-girando text-muted-foreground" /> : null}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Al activarlo, la universidad se reinicializa con semilla fija 12345.
+                  Cualquier clave Dilithium generada sera identica y recuperable.
+                </p>
               </PasoLaboratorio>
               <PasoLaboratorio numero="2" titulo="Regenera la clave privada">
-                <Button variant="outline" onClick={props.onRecuperarLlavePrivada} disabled={!props.estadoLaboratorio.rngDebilActivo || props.operacionPendiente === "lab1-extract"}>
+                <Button variant="outline" onClick={props.onRecuperarLlavePrivada} disabled={!props.estadoLaboratorio.entropiaPredecible || props.operacionPendiente === "lab1-extract"}>
                   {props.operacionPendiente === "lab1-extract" ? <Loader2 className="icono-girando" /> : <KeyRound className="icono-pequeno" />}
                   Extraer clave
                 </Button>
@@ -79,7 +93,7 @@ export function PanelLaboratorio(props: {
                 </div>
                 <HuellaCriptografica etiqueta="Firma resultante" valor={acortarHex(props.estadoLaboratorio.firmaFalsificada, 64)} tono="peligro" />
                 {props.estadoLaboratorio.entregaFalsaExitosa ? (
-                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-600 mt-2">
+                  <div className="rounded-lg border p-3 text-sm mt-2" style={{ borderColor: "color-mix(in srgb, var(--evidence-error), transparent 70%)", background: "color-mix(in srgb, var(--evidence-error), transparent 90%)", color: "var(--evidence-error)" }}>
                     Certificado falso entregado a {props.victimaSeleccionada}. Cambia a la vista Estudiante para abrirlo.
                   </div>
                 ) : null}

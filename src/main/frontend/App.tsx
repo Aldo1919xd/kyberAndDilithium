@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { FileCheck, Fingerprint, UserRound } from "lucide-react";
+import { FileCheck, Fingerprint, Moon, Sun, UserRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ContadorMetrica } from "@/components/ContadorMetrica";
@@ -17,6 +17,7 @@ import type { Certificado, CertificadoFirmado, DatosCriptograficos, ElementoBand
 import "./styles.css";
 
 export default function App() {
+  const [tema, setTema] = useState<"dark" | "light">("dark");
   const [vista, setVista] = useState<Vista>("director");
   const [laboratorioActivo, setLaboratorioActivo] = useState<IdLaboratorio>("lab1");
   const [estudiantes, setEstudiantes] = useState<string[]>([]);
@@ -28,7 +29,7 @@ export default function App() {
   const [operacionPendiente, setOperacionPendiente] = useState("");
   const [nombreNuevoEstudiante, setNombreNuevoEstudiante] = useState("");
   const [formularioCertificado, setFormularioCertificado] = useState<Certificado>({ estudiante: "", curso: "", nota: 100, fecha: hoy() });
-  const [estadoLaboratorio, setEstadoLaboratorio] = useState<EstadoLaboratorio>({ rngDebilActivo: false });
+  const [estadoLaboratorio, setEstadoLaboratorio] = useState<EstadoLaboratorio>({ entropiaPredecible: false });
   const [victimaSeleccionada, setVictimaSeleccionada] = useState("");
   const [cursoFalso, setCursoFalso] = useState("Certificado falsificado");
   const [notaFalsa, setNotaFalsa] = useState(100);
@@ -69,9 +70,17 @@ export default function App() {
   }
 
   async function refrescarEstadoLaboratorio() {
-    const datos = await peticionGet<{ rngDebilActivo: boolean }>("/laboratorios/1/estado");
-    setEstadoLaboratorio((actual) => ({ ...actual, rngDebilActivo: datos.rngDebilActivo }));
+    const datos = await peticionGet<{ entropiaPredecible: boolean }>("/laboratorios/1/estado");
+    setEstadoLaboratorio((actual) => ({ ...actual, entropiaPredecible: datos.entropiaPredecible }));
   }
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("light", tema === "light");
+    queueMicrotask(() => {
+      const meta = document.querySelector("meta[name=theme-color]");
+      if (meta) meta.setAttribute("content", getComputedStyle(document.documentElement).backgroundColor);
+    });
+  }, [tema]);
 
   useEffect(() => {
     Promise.all([refrescarEstudiantes(), refrescarHistorial(), refrescarEstadoLaboratorio()]).catch((error) => {
@@ -218,14 +227,18 @@ export default function App() {
     }
   }
 
-  async function activarRngDebil() {
-    setOperacionPendiente("lab1-activate");
+  async function onToggleEntropiaPredecible(activo: boolean) {
+    setOperacionPendiente("lab1-toggle");
     try {
-      await peticionPost<{ exito: boolean }>("/laboratorios/1/activar-rng-debil", {});
-      setEstadoLaboratorio((actual) => ({ ...actual, rngDebilActivo: true }));
-      toast.warning("RNG debil activado", { description: "La universidad fue reinicializada con semilla fija 12345." });
+      await peticionPost<{ exito: boolean }>("/laboratorios/1/activar-rng-debil", { activo });
+      setEstadoLaboratorio((actual) => ({ ...actual, entropiaPredecible: activo }));
+      if (activo) {
+        toast.warning("Entropia predecible activada", { description: "Universidad reinicializada con semilla fija 12345." });
+      } else {
+        toast.info("Entropia predecible desactivada", { description: "La universidad usa entropia real nuevamente." });
+      }
     } catch (error) {
-      toast.error("No se pudo activar", { description: error instanceof Error ? error.message : "Error desconocido" });
+      toast.error("Error al cambiar entropia", { description: error instanceof Error ? error.message : "Error desconocido" });
     } finally {
       setOperacionPendiente("");
     }
@@ -294,6 +307,13 @@ export default function App() {
               <Badge variant="outline">PQC University</Badge>
               <Badge variant="secondary">Dilithium2</Badge>
               <Badge variant="secondary">Kyber</Badge>
+              <button
+                onClick={() => setTema((t) => (t === "dark" ? "light" : "dark"))}
+                className="ml-auto rounded-md border border-border bg-secondary p-1.5 text-secondary-foreground transition-colors hover:bg-muted"
+                aria-label="Cambiar tema"
+              >
+                {tema === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
             </div>
             <h1 className="titulo-app">Laboratorio  de certificados PQC.</h1>
             <p className="subtitulo-app">
@@ -371,7 +391,7 @@ export default function App() {
                 onCambiarLaboratorio={setLaboratorioActivo}
                 operacionPendiente={operacionPendiente}
                 estadoLaboratorio={estadoLaboratorio}
-                onActivarRngDebil={activarRngDebil}
+                onToggleEntropiaPredecible={onToggleEntropiaPredecible}
                 onRecuperarLlavePrivada={recuperarLlavePrivada}
                 onFirmarCertificadoFalso={firmarCertificadoFalso}
                 onEntregarCertificadoFalso={entregarCertificadoFalso}

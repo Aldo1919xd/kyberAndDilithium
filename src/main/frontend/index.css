@@ -11,45 +11,87 @@
 
 @layer base {
   :root {
-    --background: 0 0% 2%;
-    --foreground: 0 0% 96%;
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 96%;
-    --primary: 0 0% 96%;
-    --primary-foreground: 0 0% 3%;
-    --secondary: 0 0% 8%;
-    --secondary-foreground: 0 0% 94%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 66%;
-    --accent: 0 0% 14%;
-    --accent-foreground: 0 0% 96%;
-    --destructive: 0 0% 92%;
-    --destructive-foreground: 0 0% 4%;
-    --border: 0 0% 18%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 80%;
+    --background: hsl(0 0% 2%);
+    --foreground: hsl(0 0% 96%);
+    --card: hsl(0 0% 5%);
+    --card-foreground: hsl(0 0% 96%);
+    --primary: hsl(0 0% 96%);
+    --primary-foreground: hsl(0 0% 3%);
+    --secondary: hsl(0 0% 8%);
+    --secondary-foreground: hsl(0 0% 94%);
+    --muted: hsl(0 0% 12%);
+    --muted-foreground: hsl(0 0% 66%);
+    --accent: hsl(0 0% 14%);
+    --accent-foreground: hsl(0 0% 96%);
+    --destructive: hsl(0 0% 92%);
+    --destructive-foreground: hsl(0 0% 4%);
+    --border: hsl(0 0% 18%);
+    --input: hsl(0 0% 20%);
+    --ring: hsl(0 0% 80%);
     --radius: 0.5rem;
+
+    --select-option-bg: hsl(0 0% 2%);
+    --select-option-fg: hsl(0 0% 96%);
+    --certificate-bg: hsl(0 0% 96%);
+    --certificate-fg: hsl(0 0% 2%);
+    --certificate-border: hsl(0 0% 86%);
+    --certificate-inner-border: hsl(0 0% 84%);
+    --certificate-grid: hsl(0 0% 95%);
+    --badge-success-bg: hsl(0 0% 100%);
+    --badge-success-fg: hsl(0 0% 0%);
+    --badge-success-border: hsl(0 0% 100%);
+    --evidence-success: hsl(152 76% 36%);
+    --evidence-error: hsl(0 72% 46%);
+    --huella-bg: hsl(0 0% 0%);
+    --huella-fg: hsl(0 0% 96%);
+    --huella-border-danger: hsl(0 70% 48%);
   }
 
-  * {
-    @apply border-border;
+  .light {
+    --background: hsl(0 0% 100%);
+    --foreground: hsl(0 0% 9%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(0 0% 9%);
+    --primary: hsl(0 0% 9%);
+    --primary-foreground: hsl(0 0% 96%);
+    --secondary: hsl(0 0% 96%);
+    --secondary-foreground: hsl(0 0% 9%);
+    --muted: hsl(0 0% 96%);
+    --muted-foreground: hsl(0 0% 45%);
+    --accent: hsl(0 0% 92%);
+    --accent-foreground: hsl(0 0% 9%);
+    --destructive: hsl(0 0% 14%);
+    --destructive-foreground: hsl(0 0% 96%);
+    --border: hsl(0 0% 86%);
+    --input: hsl(0 0% 82%);
+    --ring: hsl(0 0% 20%);
+
+    --select-option-bg: hsl(0 0% 100%);
+    --select-option-fg: hsl(0 0% 9%);
+    --huella-bg: hsl(0 0% 12%);
+    --huella-fg: hsl(0 0% 92%);
+    --huella-border-danger: hsl(0 70% 42%);
   }
 
   html {
     color-scheme: dark;
-    background: hsl(var(--background));
+    background: var(--background);
     text-rendering: geometricPrecision;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  html.light {
+    color-scheme: light;
   }
 
   body {
     min-width: 320px;
     overflow-x: hidden;
     background:
-      linear-gradient(90deg, hsl(var(--border) / 0.22) 1px, transparent 1px),
-      linear-gradient(180deg, hsl(var(--border) / 0.18) 1px, transparent 1px),
-      hsl(var(--background));
+      linear-gradient(90deg, color-mix(in srgb, var(--border), transparent 78%) 1px, transparent 1px),
+      linear-gradient(180deg, color-mix(in srgb, var(--border), transparent 82%) 1px, transparent 1px),
+      var(--background);
     background-size: 72px 72px;
     font-family: InterVariable, Inter, ui-sans-serif, system-ui, sans-serif;
   }
@@ -61,8 +103,8 @@
   }
 
   select option {
-    background: #050505;
-    color: #f4f4f4;
+    background: var(--select-option-bg);
+    color: var(--select-option-fg);
   }
 }
 
@@ -71,37 +113,37 @@
     position: relative;
     overflow: hidden;
     border-radius: 8px;
-    border: 1px solid rgb(0 0 0 / 0.14);
+    border: 1px solid var(--certificate-border);
     background:
-      linear-gradient(90deg, rgb(0 0 0 / 0.05) 1px, transparent 1px),
-      linear-gradient(180deg, rgb(0 0 0 / 0.05) 1px, transparent 1px),
-      #f5f5f5;
+      linear-gradient(90deg, var(--certificate-grid) 1px, transparent 1px),
+      linear-gradient(180deg, var(--certificate-grid) 1px, transparent 1px),
+      var(--certificate-bg);
     background-size: 22px 22px;
     padding: 28px;
-    color: #050505;
+    color: var(--certificate-fg);
   }
 
   .certificate::before {
     content: "";
     position: absolute;
     inset: 10px;
-    border: 1px solid rgb(0 0 0 / 0.16);
+    border: 1px solid var(--certificate-inner-border);
     pointer-events: none;
   }
 
   .toast-surface {
-    border: 1px solid hsl(var(--border)) !important;
+    border: 1px solid var(--border) !important;
     border-radius: 8px !important;
-    background: hsl(var(--card)) !important;
-    color: hsl(var(--foreground)) !important;
+    background: var(--card) !important;
+    color: var(--foreground) !important;
   }
 
   .toast-title {
-    color: hsl(var(--foreground)) !important;
+    color: var(--foreground) !important;
   }
 
   .toast-description {
-    color: hsl(var(--muted-foreground)) !important;
+    color: var(--muted-foreground) !important;
   }
 }
 

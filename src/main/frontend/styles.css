@@ -8,7 +8,7 @@
   .titulo-app { @apply max-w-4xl text-4xl font-semibold leading-tight tracking-normal text-balance sm:text-5xl; }
   .subtitulo-app { @apply mt-4 max-w-2xl text-base leading-7 text-muted-foreground; }
   .grupo-insignias { @apply mb-4 flex flex-wrap items-center gap-2; }
-  .tarjeta-estadisticas { @apply self-end bg-foreground text-background; }
+  .tarjeta-estadisticas { @apply self-end; background-color: var(--foreground) !important; color: var(--background) !important; }
   .cuadricula-estadisticas { @apply grid grid-cols-3 gap-4 p-5; }
   .cuadricula-navegacion { @apply grid gap-2 sm:grid-cols-3; }
   .grupo-seccion { @apply space-y-6; }
@@ -32,37 +32,37 @@
   .descripcion-encabezado { @apply mt-1 max-w-2xl text-sm leading-6 text-muted-foreground; }
 
   /* Crypto fingerprint */
-  .huella { @apply rounded-md border bg-black p-4; }
-  .huella-peligro { @apply border-white/25; }
+  .huella { @apply rounded-md border p-4; background: var(--huella-bg); border-color: var(--border); }
+  .huella-peligro { border-color: var(--huella-border-danger) !important; }
   .etiqueta-huella { @apply mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground; }
-  .valor-huella { @apply whitespace-pre-wrap break-all font-mono text-xs leading-5 text-foreground; }
+  .valor-huella { @apply whitespace-pre-wrap break-all font-mono text-xs leading-5; color: var(--huella-fg); }
 
   /* Metric */
   .valor-metrica { @apply font-mono text-2xl font-semibold; }
-  .etiqueta-metrica { @apply mt-1 text-xs text-background/60; }
+  .etiqueta-metrica { @apply mt-1 text-xs; color: color-mix(in srgb, var(--background), transparent 40%); }
 
   /* Certificate card */
-  .vista-previa-vacia { @apply flex min-h-[300px] items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 p-8 text-center text-sm text-muted-foreground; }
-  .encabezado-certificado { @apply flex items-center justify-between gap-4 border-b border-black/15 pb-5; }
-  .organizacion-cert { @apply font-mono text-xs text-black/50; }
-  .titulo-cert { @apply mt-1 text-2xl font-semibold text-black; }
-  .logo-cert { @apply flex h-14 w-14 items-center justify-center rounded-full border border-black text-sm font-semibold text-black; }
+  .vista-previa-vacia { @apply flex min-h-[300px] items-center justify-center rounded-lg border border-dashed border-border p-8 text-center text-sm; background: color-mix(in srgb, var(--muted), transparent 70%); color: var(--muted-foreground); }
+  .encabezado-certificado { @apply flex items-center justify-between gap-4 border-b pb-5; border-color: color-mix(in srgb, var(--certificate-border), transparent 70%); }
+  .organizacion-cert { @apply font-mono text-xs; color: color-mix(in srgb, var(--certificate-fg), transparent 50%); }
+  .titulo-cert { @apply mt-1 text-2xl font-semibold; color: var(--certificate-fg); }
+  .logo-cert { @apply flex h-14 w-14 items-center justify-center rounded-full text-sm font-semibold; border: 1px solid var(--certificate-fg); color: var(--certificate-fg); }
   .cuerpo-cert { @apply py-8 text-center; }
-  .etiqueta-cert { @apply text-sm text-black/55; }
-  .estudiante-cert { @apply mt-3 text-3xl font-semibold tracking-normal text-black; }
-  .etiqueta-curso-cert { @apply mt-6 text-sm text-black/55; }
-  .curso-cert { @apply mt-2 text-xl font-medium text-black; }
-  .nota-cert { @apply mt-5 font-mono text-sm text-black/70; }
-  .pie-cert { @apply flex flex-col gap-4 border-t border-black/15 pt-5 sm:flex-row sm:items-center sm:justify-between; }
-  .fecha-cert { @apply text-sm font-medium text-black; }
-  .etiqueta-pie-cert { @apply mt-1 text-xs text-black/50; }
-  .validez-cert { @apply inline-flex items-center gap-2 rounded-md border border-black px-3 py-2 text-xs font-medium text-black; }
+  .etiqueta-cert { @apply text-sm; color: color-mix(in srgb, var(--certificate-fg), transparent 45%); }
+  .estudiante-cert { @apply mt-3 text-3xl font-semibold tracking-normal; color: var(--certificate-fg); }
+  .etiqueta-curso-cert { @apply mt-6 text-sm; color: color-mix(in srgb, var(--certificate-fg), transparent 45%); }
+  .curso-cert { @apply mt-2 text-xl font-medium; color: var(--certificate-fg); }
+  .nota-cert { @apply mt-5 font-mono text-sm; color: color-mix(in srgb, var(--certificate-fg), transparent 30%); }
+  .pie-cert { @apply flex flex-col gap-4 border-t pt-5 sm:flex-row sm:items-center sm:justify-between; border-color: color-mix(in srgb, var(--certificate-border), transparent 70%); }
+  .fecha-cert { @apply text-sm font-medium; color: var(--certificate-fg); }
+  .etiqueta-pie-cert { @apply mt-1 text-xs; color: color-mix(in srgb, var(--certificate-fg), transparent 50%); }
+  .validez-cert { @apply inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-medium; border: 1px solid var(--certificate-fg); color: var(--certificate-fg); }
   .accion-cert { @apply mt-5; }
 
   /* Lab */
-  .leccion-lab { @apply rounded-lg border border-white bg-white p-5 text-black; }
+  .leccion-lab { @apply rounded-lg border p-5; border-color: var(--certificate-border); background: var(--certificate-bg); color: var(--certificate-fg); }
   .titulo-leccion { @apply text-sm font-semibold; }
-  .texto-leccion { @apply mt-2 text-sm leading-6 text-black/70; }
+  .texto-leccion { @apply mt-2 text-sm leading-6; color: color-mix(in srgb, var(--certificate-fg), transparent 30%); }
 
   /* Step */
   .paso { @apply grid gap-4 rounded-lg border border-border bg-secondary p-4 md:grid-cols-[3rem_1fr]; }
@@ -73,7 +73,7 @@
   .panel-pqc { @apply grid gap-4 border-t border-border pt-6 md:grid-cols-2; }
 
   /* Empty state */
-  .estado-vacio { @apply rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground; }
+  .estado-vacio { @apply rounded-lg border border-dashed border-border p-6 text-center text-sm; background: color-mix(in srgb, var(--muted), transparent 70%); color: var(--muted-foreground); }
 
   /* Inbox */
   .elemento-bandeja { @apply flex flex-col gap-3 rounded-lg border border-border bg-secondary p-4 sm:flex-row sm:items-center sm:justify-between; }
@@ -95,8 +95,8 @@
 
   /* Crypto evidence */
   .evidencia-crypto { @apply rounded-lg border p-4 space-y-2 text-sm; }
-  .evidencia-exito { @apply border-emerald-500/30 bg-emerald-500/5; }
-  .evidencia-fallo { @apply border-red-500/30 bg-red-500/5; }
+  .evidencia-exito { border-color: color-mix(in srgb, var(--evidence-success), transparent 70%); background: color-mix(in srgb, var(--evidence-success), transparent 92%); }
+  .evidencia-fallo { border-color: color-mix(in srgb, var(--evidence-error), transparent 70%); background: color-mix(in srgb, var(--evidence-error), transparent 92%); }
   .encabezado-evidencia { @apply flex items-center justify-between mb-2; }
   .grupo-algoritmo { @apply flex items-center gap-2; }
   .texto-algoritmo { @apply font-semibold text-foreground; }
@@ -106,7 +106,7 @@
   .linea-evidencia { @apply flex items-start gap-2 text-xs; }
   .etiqueta-evidencia { @apply text-muted-foreground shrink-0 w-14; }
   .valor-tipo-llave { @apply font-mono font-semibold text-foreground mr-1; }
-  .codigo-llave { @apply font-mono text-foreground bg-muted/50 px-1.5 py-0.5 rounded; }
+  .codigo-llave { @apply font-mono text-foreground px-1.5 py-0.5 rounded; background: color-mix(in srgb, var(--muted), transparent 50%); }
   .codigo-evidencia { @apply font-mono text-foreground break-all leading-5; }
 
   /* Utilities */

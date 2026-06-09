@@ -128,16 +128,19 @@ public class ControladorApi {
 
     // ===== LABORATORIO 1: RNG Débil =====
     @PostMapping("/laboratorios/1/activar-rng-debil")
-    public Map<String, Object> activarRngDebil() {
-        servicioSimulacion.activarRngDebil(true);
-        RandomSemillaFija rs = servicioSimulacion.obtenerRandomSemillaFija();
-        servicioUniversidad.reinicializarConRandom(rs);
-        return Map.of("exito", true, "mensaje", "RNG débil activado. La universidad se re-inicializó con semilla fija 12345.");
+    public Map<String, Object> activarRngDebil(@RequestBody Map<String, Boolean> body) {
+        boolean activo = body.getOrDefault("activo", true);
+        servicioSimulacion.activarRngDebil(activo);
+        if (activo) {
+            RandomSemillaFija rs = servicioSimulacion.obtenerRandomSemillaFija();
+            servicioUniversidad.reinicializarConRandom(rs);
+        }
+        return Map.of("exito", true, "entropiaPredecible", activo);
     }
 
     @GetMapping("/laboratorios/1/estado")
     public Map<String, Object> estadoLaboratorio1() {
-        return Map.of("rngDebilActivo", servicioSimulacion.estaRngDebilActivo());
+        return Map.of("entropiaPredecible", servicioSimulacion.estaRngDebilActivo());
     }
 
     @PostMapping("/laboratorios/1/recuperar-llave-privada")

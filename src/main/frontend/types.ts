@@ -61,7 +61,7 @@ export type RespuestaApi = {
 };
 
 export type EstadoLaboratorio = {
-  rngDebilActivo: boolean;
+  entropiaPredecible: boolean;
   llavePrivadaRecuperada?: string;
   llavePublicaRecuperada?: string;
   firmaFalsificada?: string;
