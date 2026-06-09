@@ -2,7 +2,9 @@ package com.test.demo.service;
 
 import com.test.demo.model.DatosCertificado;
 import com.test.demo.model.RandomSemillaFija;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPublicKeyParameters;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,16 @@ class ServicioUniversidadTests {
         servicio.inicializarUniversidad();
     }
 
+    private static byte[] generarLlavePublicaEstudiante() {
+        ServicioCifradoKyber cs = new ServicioCifradoKyber();
+        AsymmetricCipherKeyPair par = cs.generarParLlaves();
+        return ((KyberPublicKeyParameters) par.getPublic()).getEncoded();
+    }
+
+    private void crearEstudiante(String nombre) {
+        servicio.registrarEstudiante(nombre, generarLlavePublicaEstudiante());
+    }
+
     @Test
     void inicializarUniversidad_funciona() {
         assertTrue(servicio.estaInicializada());
@@ -36,8 +48,8 @@ class ServicioUniversidadTests {
     }
 
     @Test
-    void crearEstudiante_generaLlaves() {
-        servicio.crearEstudiante("Alice");
+    void registrarEstudiante_guardaPublicKey() {
+        crearEstudiante("Alice");
         assertEquals(1, servicio.obtenerNombresEstudiantes().size());
         assertTrue(servicio.obtenerNombresEstudiantes().contains("Alice"));
         String hex = servicio.obtenerLlavePublicaEstudianteHex("Alice");
@@ -47,9 +59,9 @@ class ServicioUniversidadTests {
 
     @Test
     void estudianteDuplicado_sobrescribeLlaves() {
-        servicio.crearEstudiante("Alice");
+        crearEstudiante("Alice");
         String llave1 = servicio.obtenerLlavePublicaEstudianteHex("Alice");
-        servicio.crearEstudiante("Alice");
+        crearEstudiante("Alice");
         String llave2 = servicio.obtenerLlavePublicaEstudianteHex("Alice");
         assertNotNull(llave1);
         assertNotNull(llave2);
@@ -57,7 +69,7 @@ class ServicioUniversidadTests {
 
     @Test
     void firmarCertificado_paraEstudianteExistente() throws Exception {
-        servicio.crearEstudiante("Alice");
+        crearEstudiante("Alice");
         DatosCertificado cert = new DatosCertificado("Alice", "Matematicas", 95, "2025-06-01");
         Map<String, Object> resultado = servicio.firmarCertificado(cert);
         assertEquals("emitido", resultado.get("estado"));
@@ -72,8 +84,8 @@ class ServicioUniversidadTests {
     }
 
     @Test
-    void flujoCompleto_emitirEntregarRecibir() throws Exception {
-        servicio.crearEstudiante("Bob");
+    void flujoCompleto_emitirEntregar() throws Exception {
+        crearEstudiante("Bob");
         DatosCertificado cert = new DatosCertificado("Bob", "Fisica", 88, "2025-06-15");
         Map<String, Object> emitido = servicio.firmarCertificado(cert);
         String id = (String) emitido.get("id");
@@ -81,29 +93,32 @@ class ServicioUniversidadTests {
         Map<String, Object> entrega = servicio.entregarCertificado(id, "Bob");
         assertNotNull(entrega);
         assertEquals("entregado", entrega.get("estado"));
-
-        Map<String, Object> recibido = servicio.recibirDeBandeja(id, "Bob");
-        assertTrue((Boolean) recibido.get("valido"));
+        assertNotNull(entrega.get("textoCifrado"));
+        assertNotNull(entrega.get("iv"));
+        assertNotNull(entrega.get("datosCifrados"));
     }
 
     @Test
-    void recibirCertificado_conLlaveIncorrecta_lanzaExcepcion() throws Exception {
-        servicio.crearEstudiante("Bob");
+    void bandejaContieneElementosDespuesDeEntrega() throws Exception {
+        crearEstudiante("Bob");
         DatosCertificado cert = new DatosCertificado("Bob", "Fisica", 88, "2025-06-15");
         Map<String, Object> emitido = servicio.firmarCertificado(cert);
         String id = (String) emitido.get("id");
 
         servicio.entregarCertificado(id, "Bob");
+        List<Map<String, Object>> bandeja = servicio.obtenerBandeja("Bob");
+        assertEquals(1, bandeja.size());
+    }
 
-        servicio.crearEstudiante("Eve");
-        String idFalso = (String) emitido.get("id");
-
+    @Test
+    void estudianteSinBandeja_retornaVacio() {
+        crearEstudiante("Eve");
         assertTrue(servicio.obtenerBandeja("Eve").isEmpty());
     }
 
     @Test
     void entregarCertificado_yaEntregado_lanzaExcepcion() throws Exception {
-        servicio.crearEstudiante("Bob");
+        crearEstudiante("Bob");
         DatosCertificado cert = new DatosCertificado("Bob", "Fisica", 88, "2025-06-15");
         Map<String, Object> emitido = servicio.firmarCertificado(cert);
         String id = (String) emitido.get("id");
@@ -114,7 +129,7 @@ class ServicioUniversidadTests {
 
     @Test
     void verificarFirmaCertificado_valida() throws Exception {
-        servicio.crearEstudiante("Alice");
+        crearEstudiante("Alice");
         DatosCertificado cert = new DatosCertificado("Alice", "Historia", 90, "2025-06-01");
         Map<String, Object> emitido = servicio.firmarCertificado(cert);
         byte[] firma = org.bouncycastle.util.encoders.Hex.decodeStrict((String) emitido.get("firma"));
@@ -123,7 +138,7 @@ class ServicioUniversidadTests {
 
     @Test
     void historial_contieneCertificadosEmitidos() throws Exception {
-        servicio.crearEstudiante("Alice");
+        crearEstudiante("Alice");
         servicio.firmarCertificado(new DatosCertificado("Alice", "Curso1", 80, "2025-01-01"));
         servicio.firmarCertificado(new DatosCertificado("Alice", "Curso2", 90, "2025-02-01"));
         assertEquals(2, servicio.obtenerTodosCertificados().size());
@@ -131,7 +146,7 @@ class ServicioUniversidadTests {
 
     @Test
     void reInicializarUniversidad_conRandomSemillaFija_verifica() throws Exception {
-        servicio.crearEstudiante("Alice");
+        crearEstudiante("Alice");
         DatosCertificado cert = new DatosCertificado("Alice", "Test", 85, "2025-06-01");
 
         byte[] pubKeyOriginal = servicio.obtenerLlavePublicaUniversidad().clone();
@@ -147,7 +162,7 @@ class ServicioUniversidadTests {
         RandomSemillaFija rs2 = new RandomSemillaFija(12345L);
         ServicioUniversidad servicio2 = new ServicioUniversidad(servicioFirma, servicioCifrado);
         servicio2.inicializarUniversidad();
-        servicio2.crearEstudiante("Alice");
+        crearEstudiante("Alice");
         servicio2.reinicializarConRandom(rs2);
 
         byte[] pubKeyFija2 = servicio2.obtenerLlavePublicaUniversidad();
@@ -159,4 +174,5 @@ class ServicioUniversidadTests {
         assertTrue(servicio.verificarFirmaCertificado(cert, firma),
             "Firma debe verificar contra la llave posterior a reinicializar");
     }
+
 }

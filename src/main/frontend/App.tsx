@@ -11,9 +11,9 @@ import { PanelDirector } from "@/components/PanelDirector";
 import { PanelEstudiante } from "@/components/PanelEstudiante";
 import { PanelLaboratorio } from "@/components/PanelLaboratorio";
 import { PanelInfoPQC } from "@/components/PanelInfoPQC";
-import { peticionGet, peticionPost } from "@/api";
+import { peticionGet, peticionPost, generarParKyber, guardarLlavePrivada, obtenerLlavePrivada, descifrarConKyber, verificarFirmaDilithium, aBytesCanonicos, bytesToHex, hexToBytes } from "@/api";
 import { hoy } from "@/lib/ayudantes";
-import type { Certificado, CertificadoFirmado, DatosCriptograficos, ElementoBandeja, CertificadoRecibido, EstadoLaboratorio, IdLaboratorio, RespuestaApi, RespuestaEmision, RespuestaEntrega, RespuestaRecepcion, Vista } from "@/types";
+import type { Certificado, CertificadoFirmado, DatosCriptograficos, ElementoBandeja, CertificadoRecibido, EstadoLaboratorio, IdLaboratorio, RespuestaApi, RespuestaEmision, RespuestaEntrega, Vista } from "@/types";
 import "./styles.css";
 
 export default function App() {
@@ -36,6 +36,7 @@ export default function App() {
   const [evidenciaDilithium, setEvidenciaDilithium] = useState<DatosCriptograficos | null>(null);
   const [evidenciaKyber, setEvidenciaKyber] = useState<DatosCriptograficos | null>(null);
   const [evidenciaVerificacion, setEvidenciaVerificacion] = useState<DatosCriptograficos | null>(null);
+  const [llavePublicaUniversidad, setLlavePublicaUniversidad] = useState("");
 
   const estadisticas = useMemo(
     () => ({
@@ -83,7 +84,12 @@ export default function App() {
   }, [tema]);
 
   useEffect(() => {
-    Promise.all([refrescarEstudiantes(), refrescarHistorial(), refrescarEstadoLaboratorio()]).catch((error) => {
+    Promise.all([
+      refrescarEstudiantes(),
+      refrescarHistorial(),
+      refrescarEstadoLaboratorio(),
+      peticionGet<{ llavePublica: string }>("/universidad/llave-publica").then((d) => setLlavePublicaUniversidad(d.llavePublica)),
+    ]).catch((error) => {
       toast.error("No se pudo cargar el estado inicial", { description: error instanceof Error ? error.message : "Error desconocido" });
     });
   }, []);
@@ -94,9 +100,13 @@ export default function App() {
     if (!nombre) return;
     setOperacionPendiente("create-student");
     try {
-      const datos = await peticionPost<RespuestaApi>("/estudiante/crear", { nombre });
-      if (!datos.exito) throw new Error(datos.error || "No se pudo crear el estudiante");
-      toast.success("Estudiante preparado", { description: `${nombre} ya tiene llaves Kyber.` });
+      const par = generarParKyber();
+      guardarLlavePrivada(nombre, par.secretKey);
+      const llavePublicaHex = bytesToHex(par.publicKey);
+      const datos = await peticionPost<{ exito: boolean; llavePublicaUniversidad: string }>("/estudiante/crear", { nombre, llavePublica: llavePublicaHex });
+      if (!datos.exito) throw new Error("No se pudo crear el estudiante");
+      if (datos.llavePublicaUniversidad) setLlavePublicaUniversidad(datos.llavePublicaUniversidad);
+      toast.success("Estudiante preparado", { description: `${nombre} genero su par Kyber en el navegador.` });
       setNombreNuevoEstudiante("");
       await refrescarEstudiantes();
       setEstudianteActual(nombre);
@@ -120,7 +130,7 @@ export default function App() {
       const datos = await peticionPost<RespuestaEmision>("/certificado/emitir", formularioCertificado);
       setUltimoCertificadoFirmado(datos.certificado!);
       setEvidenciaDilithium({
-        algoritmo: "Dilithium2",
+        algoritmo: "Dilithium3",
         operacion: "FIRMAR",
         tipoLlave: "PRIVADA de Universidad",
         llaveHex: datos.llavePublicaUniversidad || "",
@@ -129,7 +139,7 @@ export default function App() {
         exito: true,
       });
       setEvidenciaKyber(null);
-      toast.success("Certificado firmado", { description: "Dilithium2 genero una firma valida." });
+      toast.success("Certificado firmado", { description: "Dilithium3 genero una firma valida." });
       await refrescarHistorial();
     } catch (error) {
       toast.error("No se pudo emitir", { description: error instanceof Error ? error.message : "Error desconocido" });
@@ -147,6 +157,8 @@ export default function App() {
         nombreEstudiante: destinatario,
       });
       if (!datos.exito) throw new Error(datos.error || "No se pudo entregar");
+      const pubKey = datos.llavePublicaUniversidad || llavePublicaUniversidad;
+      if (pubKey) setLlavePublicaUniversidad(pubKey);
       setEvidenciaKyber({
         algoritmo: "Kyber",
         operacion: "CIFRAR (ML-KEM + AES-GCM)",
@@ -195,31 +207,40 @@ export default function App() {
     if (!estudianteActual) return;
     setOperacionPendiente(`open-${item.id}`);
     try {
-      const datos = await peticionPost<RespuestaRecepcion>("/certificados/recibir", {
-        idCertificado: item.id,
-        nombreEstudiante: estudianteActual,
-      });
-      if (!datos.exito) throw new Error(datos.error || "No se pudo abrir");
-      setUltimoCertificadoRecibido({ certificado: datos.certificado!, firma: datos.firma, valido: datos.valido! });
+      const llavePrivada = obtenerLlavePrivada(estudianteActual);
+      if (!llavePrivada) throw new Error("Llave privada no disponible en este navegador");
+
+      const textoCifrado = hexToBytes(item.textoCifrado || "");
+      const iv = hexToBytes(item.iv || "");
+      const datosCifrados = hexToBytes(item.datosCifrados || "");
+      const firma = hexToBytes(item.firma || "");
+
+      await descifrarConKyber(textoCifrado, iv, datosCifrados, llavePrivada);
+
+      const certCanonico = aBytesCanonicos(item.certificado);
+      const llavePub = hexToBytes(llavePublicaUniversidad);
+      const valido = verificarFirmaDilithium(certCanonico, firma, llavePub);
+
+      setUltimoCertificadoRecibido({ certificado: item.certificado, firma: item.firma, valido });
       setEvidenciaKyber({
         algoritmo: "Kyber",
         operacion: "DESCIFRAR (ML-KEM + AES-GCM)",
-        tipoLlave: "PRIVADA de Estudiante (descifrado local)",
-        llaveHex: "",
+        tipoLlave: "PRIVADA de Estudiante (local)",
+        llaveHex: bytesToHex(llavePrivada),
         entrada: `Texto cifrado + IV de ${estudianteActual}`,
-        salida: `Certificado descifrado correctamente`,
+        salida: `Certificado descifrado localmente en el navegador`,
         exito: true,
       });
       setEvidenciaVerificacion({
-        algoritmo: "Dilithium2",
+        algoritmo: "Dilithium3",
         operacion: "VERIFICAR",
         tipoLlave: "PÚBLICA de Universidad",
-        llaveHex: datos.llavePublicaUniversidad || "",
+        llaveHex: llavePublicaUniversidad,
         entrada: `Firma + datos del certificado`,
-        salida: datos.valido ? "Firma válida — contenido íntegro ✅" : "Firma inválida — contenido alterado ❌",
-        exito: datos.valido!,
+        salida: valido ? "Firma válida — contenido íntegro ✅" : "Firma inválida — contenido alterado ❌",
+        exito: valido,
       });
-      toast.success("Certificado descifrado", { description: datos.valido ? "Firma Dilithium2 verificada." : "La firma no coincide." });
+      toast.success("Certificado descifrado localmente", { description: valido ? "Firma Dilithium3 verificada." : "La firma no coincide." });
     } catch (error) {
       toast.error("No se pudo abrir", { description: error instanceof Error ? error.message : "Error desconocido" });
     } finally {
@@ -305,7 +326,7 @@ export default function App() {
           <div>
             <div className="grupo-insignias">
               <Badge variant="outline">PQC University</Badge>
-              <Badge variant="secondary">Dilithium2</Badge>
+              <Badge variant="secondary">Dilithium3</Badge>
               <Badge variant="secondary">Kyber</Badge>
               <button
                 onClick={() => setTema((t) => (t === "dark" ? "light" : "dark"))}

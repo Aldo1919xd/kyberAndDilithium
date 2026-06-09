@@ -7,7 +7,7 @@ import jakarta.annotation.PostConstruct;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPrivateKeyParameters;
 import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPublicKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPrivateKeyParameters;
+import org.bouncycastle.pqc.crypto.crystals.kyber.KyberParameters;
 import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPublicKeyParameters;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,6 @@ public class ServicioUniversidad {
     private boolean inicializada = false;
 
     private final ConcurrentHashMap<String, KyberPublicKeyParameters> llavesPublicasEstudiantes = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, KyberPrivateKeyParameters> llavesPrivadasEstudiantes = new ConcurrentHashMap<>();
     private final List<Map<String, Object>> certificadosEmitidos = new ArrayList<>();
     private final ConcurrentHashMap<String, List<Map<String, Object>>> bandejas = new ConcurrentHashMap<>();
 
@@ -69,10 +68,9 @@ public class ServicioUniversidad {
         return llavePublicaUniversidad.getEncoded();
     }
 
-    public void crearEstudiante(String nombre) {
-        AsymmetricCipherKeyPair par = servicioCifrado.generarParLlaves();
-        llavesPublicasEstudiantes.put(nombre, (KyberPublicKeyParameters) par.getPublic());
-        llavesPrivadasEstudiantes.put(nombre, (KyberPrivateKeyParameters) par.getPrivate());
+    public void registrarEstudiante(String nombre, byte[] llavePublica) {
+        KyberPublicKeyParameters llave = new KyberPublicKeyParameters(KyberParameters.kyber768, llavePublica);
+        llavesPublicasEstudiantes.put(nombre, llave);
     }
 
     public Set<String> obtenerNombresEstudiantes() {
@@ -156,42 +154,6 @@ public class ServicioUniversidad {
         return List.copyOf(bandejas.getOrDefault(nombreEstudiante, List.of()));
     }
 
-    public Map<String, Object> recibirDeBandeja(String idCertificado, String nombreEstudiante) throws Exception {
-        List<Map<String, Object>> bandeja = bandejas.get(nombreEstudiante);
-        if (bandeja == null) throw new IllegalArgumentException("Bandeja vacía");
-
-        Map<String, Object> encontrado = null;
-        for (Map<String, Object> elemento : bandeja) {
-            if (elemento.get("id").equals(idCertificado)) {
-                encontrado = elemento;
-                break;
-            }
-        }
-        if (encontrado == null) throw new IllegalArgumentException("Certificado no encontrado en bandeja");
-
-        byte[] textoCifrado = Hex.decodeStrict((String) encontrado.get("textoCifrado"));
-        byte[] iv = Hex.decodeStrict((String) encontrado.get("iv"));
-        byte[] datosCifrados = Hex.decodeStrict((String) encontrado.get("datosCifrados"));
-        byte[] firma = Hex.decodeStrict((String) encontrado.get("firma"));
-
-        PaqueteCifrado paquete = new PaqueteCifrado(textoCifrado, iv, datosCifrados);
-        byte[] bytesDescifrados = descifrarParaEstudiante(nombreEstudiante, paquete);
-
-        @SuppressWarnings("unchecked")
-        DatosCertificado cert = UtilidadesCertificado.desdeMapa((Map<String, Object>) encontrado.get("certificado"));
-
-        DatosCertificado certDescifrado = UtilidadesCertificado.desdeBytes(bytesDescifrados);
-        boolean integridad = certDescifrado.equals(cert);
-
-        boolean valido = verificarFirmaCertificado(cert, firma);
-
-        Map<String, Object> resultado = new LinkedHashMap<>();
-        resultado.put("certificado", encontrado.get("certificado"));
-        resultado.put("firma", encontrado.get("firma"));
-        resultado.put("valido", valido && integridad);
-        return resultado;
-    }
-
     public void insertarEnBandeja(String nombreEstudiante, Map<String, Object> elemento) {
         bandejas.computeIfAbsent(nombreEstudiante, k -> new CopyOnWriteArrayList<>()).add(elemento);
     }
@@ -201,12 +163,6 @@ public class ServicioUniversidad {
         if (llavePublica == null) throw new IllegalArgumentException("Estudiante no encontrado: " + nombreEstudiante);
         byte[] bytesCert = UtilidadesCertificado.aBytesCanonicos(cert);
         return servicioCifrado.cifrar(bytesCert, llavePublica);
-    }
-
-    public byte[] descifrarParaEstudiante(String nombreEstudiante, PaqueteCifrado paquete) throws Exception {
-        KyberPrivateKeyParameters llavePrivada = llavesPrivadasEstudiantes.get(nombreEstudiante);
-        if (llavePrivada == null) throw new IllegalArgumentException("Estudiante no encontrado: " + nombreEstudiante);
-        return servicioCifrado.descifrar(paquete, llavePrivada);
     }
 
 }

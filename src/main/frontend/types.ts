@@ -46,12 +46,6 @@ export type RespuestaEmision = RespuestaApi & {
 export type RespuestaEntrega = RespuestaApi & {
   entrega?: ElementoBandeja;
   llavePublicaEstudiante?: string;
-};
-
-export type RespuestaRecepcion = RespuestaApi & {
-  certificado?: Certificado;
-  firma?: string;
-  valido?: boolean;
   llavePublicaUniversidad?: string;
 };
 

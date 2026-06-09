@@ -22,7 +22,7 @@ public class ServicioFirmaDilithium {
 
     public AsymmetricCipherKeyPair generarParLlaves(SecureRandom aleatorio) {
         DilithiumKeyPairGenerator generator = new DilithiumKeyPairGenerator();
-        generator.init(new DilithiumKeyGenerationParameters(aleatorio, DilithiumParameters.dilithium2));
+        generator.init(new DilithiumKeyGenerationParameters(aleatorio, DilithiumParameters.dilithium3));
         return generator.generateKeyPair();
     }
 

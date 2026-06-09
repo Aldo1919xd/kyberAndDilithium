@@ -50,7 +50,7 @@ export function PanelEstudiante(props: {
         <Card>
           <CardHeader>
             <div className="fila-flexible-entre">
-              <EncabezadoSeccion icono={MailOpen} titulo="Bandeja cifrada" descripcion="Cada elemento incluye encapsulado Kyber, datos cifrados y firma Dilithium2." />
+              <EncabezadoSeccion icono={MailOpen} titulo="Bandeja cifrada" descripcion="Cada elemento incluye encapsulado Kyber, datos cifrados y firma Dilithium3 de la universidad." />
               {props.estudianteActual ? <Badge variant="outline">{props.bandeja.length} en bandeja</Badge> : null}
             </div>
           </CardHeader>
@@ -79,11 +79,11 @@ export function PanelEstudiante(props: {
 
       <Card>
         <CardHeader>
-          <EncabezadoSeccion icono={ShieldCheck} titulo="Certificado recibido" descripcion="El resultado solo es confiable si el descifrado y la firma coinciden." />
+          <EncabezadoSeccion icono={ShieldCheck} titulo="Certificado recibido" descripcion="Descifrado con Kyber y verificado con Dilithium3 localmente." />
         </CardHeader>
         <CardContent>
-          <TarjetaCertificado cert={props.ultimoCertificadoRecibido?.certificado} piePagina="Descifrado con Kyber y verificado con Dilithium2" valido={props.ultimoCertificadoRecibido?.valido} />
-          {props.ultimoCertificadoRecibido?.firma ? <HuellaCriptografica etiqueta="Firma Dilithium2" valor={acortarHex(props.ultimoCertificadoRecibido.firma, 52)} /> : null}
+          <TarjetaCertificado cert={props.ultimoCertificadoRecibido?.certificado} piePagina="Descifrado con Kyber y verificado con Dilithium3" valido={props.ultimoCertificadoRecibido?.valido} />
+          {props.ultimoCertificadoRecibido?.firma ? <HuellaCriptografica etiqueta="Firma Dilithium3" valor={acortarHex(props.ultimoCertificadoRecibido.firma, 52)} /> : null}
           {props.evidenciaKyber ? <div className="espaciado-evidencia"><EvidenciaOperacionCriptografica datos={props.evidenciaKyber} /></div> : null}
           {props.evidenciaVerificacion ? <div className="espaciado-evidencia"><EvidenciaOperacionCriptografica datos={props.evidenciaVerificacion} /></div> : null}
         </CardContent>

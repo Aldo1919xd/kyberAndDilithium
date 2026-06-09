@@ -2,7 +2,6 @@ package com.test.demo.controller;
 
 import com.test.demo.model.DatosCertificado;
 import com.test.demo.model.RandomSemillaFija;
-import com.test.demo.service.ServicioHandshake;
 import com.test.demo.service.ServicioSimulacion;
 import com.test.demo.service.ServicioUniversidad;
 import org.bouncycastle.util.encoders.Hex;
@@ -24,41 +23,27 @@ public class ControladorApi {
 
     private final ServicioUniversidad servicioUniversidad;
     private final ServicioSimulacion servicioSimulacion;
-    private final ServicioHandshake servicioHandshake;
 
-    public ControladorApi(ServicioUniversidad servicioUniversidad, ServicioSimulacion servicioSimulacion, ServicioHandshake servicioHandshake) {
+    public ControladorApi(ServicioUniversidad servicioUniversidad, ServicioSimulacion servicioSimulacion) {
         this.servicioUniversidad = servicioUniversidad;
         this.servicioSimulacion = servicioSimulacion;
-        this.servicioHandshake = servicioHandshake;
-    }
-
-    // ===== Handshake =====
-    @PostMapping("/handshake/init")
-    public Map<String, Object> iniciarHandshake() {
-        return servicioHandshake.iniciarHandshake();
-    }
-
-    @PostMapping("/handshake/finalizar")
-    public Map<String, Object> finalizarHandshake(@RequestBody Map<String, Object> body) {
-        String handshakeId = (String) body.get("handshake_id");
-        byte[] ct = Hex.decodeStrict((String) body.get("ct"));
-        byte[] clientNonce = Hex.decodeStrict((String) body.get("client_nonce"));
-        try {
-            return servicioHandshake.finalizarHandshake(handshakeId, ct, clientNonce);
-        } catch (IllegalArgumentException e) {
-            return Map.of("exito", false, "error", e.getMessage());
-        }
     }
 
     // ===== Estudiantes =====
     @PostMapping("/estudiante/crear")
     public Map<String, Object> crearEstudiante(@RequestBody Map<String, String> cuerpo) {
         String nombre = cuerpo.get("nombre");
+        String llavePublicaHex = cuerpo.get("llavePublica");
         if (nombre == null || nombre.isBlank()) {
             return Map.of("exito", false, "error", "El nombre es obligatorio");
         }
-        servicioUniversidad.crearEstudiante(nombre);
-        return Map.of("exito", true, "nombre", nombre);
+        if (llavePublicaHex == null || llavePublicaHex.isBlank()) {
+            return Map.of("exito", false, "error", "La llave publica Kyber es obligatoria");
+        }
+        byte[] llavePublica = Hex.decodeStrict(llavePublicaHex);
+        servicioUniversidad.registrarEstudiante(nombre, llavePublica);
+        return Map.of("exito", true, "nombre", nombre,
+            "llavePublicaUniversidad", Hex.toHexString(servicioUniversidad.obtenerLlavePublicaUniversidad()));
     }
 
     @GetMapping("/estudiantes")
@@ -89,7 +74,8 @@ public class ControladorApi {
         try {
             Map<String, Object> entregado = servicioUniversidad.entregarCertificado(idCertificado, nombreEstudiante);
             String llavePublicaEstudiante = servicioUniversidad.obtenerLlavePublicaEstudianteHex(nombreEstudiante);
-            return Map.of("exito", true, "entrega", entregado, "llavePublicaEstudiante", llavePublicaEstudiante);
+            return Map.of("exito", true, "entrega", entregado, "llavePublicaEstudiante", llavePublicaEstudiante,
+                "llavePublicaUniversidad", Hex.toHexString(servicioUniversidad.obtenerLlavePublicaUniversidad()));
         } catch (IllegalArgumentException e) {
             return Map.of("exito", false, "error", e.getMessage());
         }
@@ -100,28 +86,9 @@ public class ControladorApi {
         return Map.of("bandeja", servicioUniversidad.obtenerBandeja(nombre));
     }
 
-    @PostMapping("/certificados/recibir")
-    public Map<String, Object> recibirCertificado(@RequestBody Map<String, String> cuerpo) throws Exception {
-        String idCertificado = cuerpo.get("idCertificado");
-        String nombreEstudiante = cuerpo.get("nombreEstudiante");
-        if (idCertificado == null || nombreEstudiante == null) {
-            return Map.of("exito", false, "error", "Faltan parámetros");
-        }
-        try {
-            Map<String, Object> resultado = servicioUniversidad.recibirDeBandeja(idCertificado, nombreEstudiante);
-            resultado.put("exito", true);
-            resultado.put("llavePublicaUniversidad", servicioUniversidad.estaInicializada()
-                ? Hex.toHexString(servicioUniversidad.obtenerLlavePublicaUniversidad()) : "");
-            return resultado;
-        } catch (IllegalArgumentException e) {
-            return Map.of("exito", false, "error", e.getMessage());
-        } catch (Exception e) {
-            log.error("Error al recibir certificado {} para {}", idCertificado, nombreEstudiante, e);
-            return Map.of(
-                "exito", false,
-                "error", "No se pudo descifrar este certificado con la identidad seleccionada."
-            );
-        }
+    @GetMapping("/universidad/llave-publica")
+    public Map<String, Object> obtenerLlavePublicaUniversidad() {
+        return Map.of("llavePublica", Hex.toHexString(servicioUniversidad.obtenerLlavePublicaUniversidad()));
     }
 
     // ===================== LABORATORIOS =====================

@@ -31,7 +31,7 @@ export function PanelDirector(props: {
       <div className="grupo-seccion">
         <Card>
           <CardHeader>
-            <EncabezadoSeccion icono={GraduationCap} titulo="Preparar estudiante" descripcion="Genera un par Kyber para que el certificado tenga destinatario real." />
+            <EncabezadoSeccion icono={GraduationCap} titulo="Preparar estudiante" descripcion="Registra al estudiante con su llave publica Kyber generada en el navegador." />
           </CardHeader>
           <CardContent>
             <form className="fila-flexible" onSubmit={props.onCrearEstudiante}>
@@ -46,7 +46,7 @@ export function PanelDirector(props: {
 
         <Card>
           <CardHeader>
-            <EncabezadoSeccion icono={FileCheck} titulo="Emitir certificado" descripcion="El director firma los datos canonicos con la clave Dilithium2 de la universidad." />
+            <EncabezadoSeccion icono={FileCheck} titulo="Emitir certificado" descripcion="El director firma los datos canonicos con la clave Dilithium3 de la universidad." />
           </CardHeader>
           <CardContent>
             <form className="grupo-formulario" onSubmit={props.onFirmarCertificado}>
@@ -97,7 +97,7 @@ export function PanelDirector(props: {
           <CardContent>
             <TarjetaCertificado
               cert={props.ultimoCertificadoFirmado?.certificado}
-              piePagina={props.ultimoCertificadoFirmado?.estado === "entregado" ? "Entregado y cifrado con Kyber" : "Firmado con Dilithium2"}
+              piePagina={props.ultimoCertificadoFirmado?.estado === "entregado" ? "Entregado y cifrado con Kyber" : "Firmado con Dilithium3"}
               valido
               accion={
                 props.ultimoCertificadoFirmado && props.ultimoCertificadoFirmado.estado !== "entregado" ? (
