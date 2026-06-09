@@ -5,31 +5,7 @@ import { concatBytes } from "@noble/hashes/utils.js";
 
 const API = "/api";
 
-// ── utilidades hex ──
 
-function bytesToHex(b: Uint8Array): string {
-  return Array.from(b).map((x) => x.toString(16).padStart(2, "0")).join("");
-}
-
-function hexToBytes(h: string) {
-  const s = h.replace(/\s/g, "");
-  const r = new Uint8Array(new ArrayBuffer(s.length / 2));
-  for (let i = 0; i < r.length; i++) r[i] = Number.parseInt(s.substring(i * 2, i * 2 + 2), 16);
-  return r;
-}
-
-function concatenar(...args: Uint8Array[]) {
-  const total = args.reduce((s, a) => s + a.length, 0);
-  const r = new Uint8Array(new ArrayBuffer(total));
-  let off = 0;
-  for (const a of args) { r.set(a, off); off += a.length; }
-  return r;
-}
-
-function jsonSeguro(texto: string) {
-  try { return JSON.parse(texto); }
-  catch { return { error: texto.slice(0, 160) }; }
-}
 
 // ── handshake + cifrado ──
 
@@ -145,4 +121,30 @@ export async function peticionPost<T>(ruta: string, cuerpo: unknown): Promise<T>
   const c = t ? jsonSeguro(t) : {};
   if (!r.ok) throw new Error(c.error || `HTTP ${r.status}`);
   return "iv" in c && "datos_cifrados" in c ? (await sesion.descifrarRespuesta(c.iv, c.datos_cifrados)) as T : c;
+}
+
+// ── utilidades hex ──
+
+function bytesToHex(b: Uint8Array): string {
+  return Array.from(b).map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+function hexToBytes(h: string) {
+  const s = h.replace(/\s/g, "");
+  const r = new Uint8Array(new ArrayBuffer(s.length / 2));
+  for (let i = 0; i < r.length; i++) r[i] = Number.parseInt(s.substring(i * 2, i * 2 + 2), 16);
+  return r;
+}
+
+function concatenar(...args: Uint8Array[]) {
+  const total = args.reduce((s, a) => s + a.length, 0);
+  const r = new Uint8Array(new ArrayBuffer(total));
+  let off = 0;
+  for (const a of args) { r.set(a, off); off += a.length; }
+  return r;
+}
+
+function jsonSeguro(texto: string) {
+  try { return JSON.parse(texto); }
+  catch { return { error: texto.slice(0, 160) }; }
 }

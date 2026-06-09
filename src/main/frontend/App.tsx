@@ -204,7 +204,7 @@ export default function App() {
       setEvidenciaKyber({
         algoritmo: "Kyber",
         operacion: "DESCIFRAR (ML-KEM + AES-GCM)",
-        tipoLlave: "PRIVADA de Estudiante",
+        tipoLlave: "PRIVADA de Estudiante (descifrado local)",
         llaveHex: "",
         entrada: `Texto cifrado + IV de ${estudianteActual}`,
         salida: `Certificado descifrado correctamente`,

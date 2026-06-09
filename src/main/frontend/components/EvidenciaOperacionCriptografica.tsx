@@ -28,11 +28,13 @@ export function EvidenciaOperacionCriptografica({ datos }: { datos: DatosCriptog
           {datos.exito ? <Check className="icono-pequeno" /> : <X className="icono-pequeno" />}
         </span>
       </div>
-      <div className="linea-evidencia">
-        <span className="etiqueta-evidencia">Llave:</span>
-        <span className="valor-tipo-llave">{datos.tipoLlave}</span>
-        <code className="codigo-llave">{acortarHex(datos.llaveHex, 32)}</code>
-      </div>
+      {datos.llaveHex ? (
+        <div className="linea-evidencia">
+          <span className="etiqueta-evidencia">Llave:</span>
+          <span className="valor-tipo-llave">{datos.tipoLlave}</span>
+          <code className="codigo-llave">{acortarHex(datos.llaveHex, 32)}</code>
+        </div>
+      ) : null}
       <div className="linea-evidencia">
         <span className="etiqueta-evidencia">Entrada:</span>
         <code className="codigo-evidencia">{datos.entrada}</code>
