@@ -1,12 +1,8 @@
 package com.test.demo.controller;
 
 import com.test.demo.model.DatosCertificado;
-import com.test.demo.model.RandomSemillaFija;
-import com.test.demo.service.ServicioSimulacion;
 import com.test.demo.service.ServicioUniversidad;
 import org.bouncycastle.util.encoders.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,17 +15,12 @@ import java.util.Map;
 @RequestMapping("/api")
 public class ControladorApi {
 
-    private static final Logger log = LoggerFactory.getLogger(ControladorApi.class);
-
     private final ServicioUniversidad servicioUniversidad;
-    private final ServicioSimulacion servicioSimulacion;
 
-    public ControladorApi(ServicioUniversidad servicioUniversidad, ServicioSimulacion servicioSimulacion) {
+    public ControladorApi(ServicioUniversidad servicioUniversidad) {
         this.servicioUniversidad = servicioUniversidad;
-        this.servicioSimulacion = servicioSimulacion;
     }
 
-    // ===== Estudiantes =====
     @PostMapping("/estudiante/crear")
     public Map<String, Object> crearEstudiante(@RequestBody Map<String, String> cuerpo) {
         String nombre = cuerpo.get("nombre");
@@ -89,44 +80,6 @@ public class ControladorApi {
     @GetMapping("/universidad/llave-publica")
     public Map<String, Object> obtenerLlavePublicaUniversidad() {
         return Map.of("llavePublica", Hex.toHexString(servicioUniversidad.obtenerLlavePublicaUniversidad()));
-    }
-
-    // ===================== LABORATORIOS =====================
-
-    // ===== LABORATORIO 1: RNG Débil =====
-    @PostMapping("/laboratorios/1/activar-rng-debil")
-    public Map<String, Object> activarRngDebil(@RequestBody Map<String, Boolean> body) {
-        boolean activo = body.getOrDefault("activo", true);
-        servicioSimulacion.activarRngDebil(activo);
-        if (activo) {
-            RandomSemillaFija rs = servicioSimulacion.obtenerRandomSemillaFija();
-            servicioUniversidad.reinicializarConRandom(rs);
-        }
-        return Map.of("exito", true, "entropiaPredecible", activo);
-    }
-
-    @GetMapping("/laboratorios/1/estado")
-    public Map<String, Object> estadoLaboratorio1() {
-        return Map.of("entropiaPredecible", servicioSimulacion.estaRngDebilActivo());
-    }
-
-    @PostMapping("/laboratorios/1/recuperar-llave-privada")
-    public Map<String, Object> recuperarLlavePrivada() {
-        return servicioSimulacion.recuperarLlavePrivada();
-    }
-
-    @PostMapping("/laboratorios/1/firmar-certificado-falso")
-    public Map<String, Object> firmarCertificadoFalso(@RequestBody DatosCertificado cert) throws Exception {
-        return servicioSimulacion.firmarCertificadoFalso(cert);
-    }
-
-    @PostMapping("/laboratorios/1/entregar-falso")
-    public Map<String, Object> entregarCertificadoFalso(@RequestBody DatosCertificado cert) throws Exception {
-        try {
-            return servicioSimulacion.entregarCertificadoFalso(cert);
-        } catch (IllegalArgumentException e) {
-            return Map.of("exito", false, "error", e.getMessage());
-        }
     }
 
 }

@@ -53,13 +53,6 @@ public class ServicioUniversidad {
         inicializada = true;
     }
 
-    public synchronized void reinicializarConRandom(java.security.SecureRandom aleatorio) {
-        AsymmetricCipherKeyPair par = servicioFirma.generarParLlaves(aleatorio);
-        llavePublicaUniversidad = (MLDSAPublicKeyParameters) par.getPublic();
-        llavePrivadaUniversidad = (MLDSAPrivateKeyParameters) par.getPrivate();
-        inicializada = true;
-    }
-
     public boolean estaInicializada() {
         return inicializada;
     }

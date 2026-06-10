@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { FileCheck, Fingerprint, Moon, Sun, UserRound } from "lucide-react";
+import { FileCheck, Moon, Sun, UserRound } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ContadorMetrica } from "@/components/ContadorMetrica";
@@ -9,17 +9,15 @@ import { BotonNavegacion } from "@/components/BotonNavegacion";
 import { PanelAnimado } from "@/components/PanelAnimado";
 import { PanelDirector } from "@/components/PanelDirector";
 import { PanelEstudiante } from "@/components/PanelEstudiante";
-import { PanelLaboratorio } from "@/components/PanelLaboratorio";
 import { PanelInfoPQC } from "@/components/PanelInfoPQC";
 import { peticionGet, peticionPost, generarParKyber, guardarLlavePrivada, obtenerLlavePrivada, descifrarConKyber, verificarFirmaDilithium, bytesToHex, hexToBytes } from "@/api";
 import { hoy } from "@/lib/ayudantes";
-import type { Certificado, CertificadoFirmado, DatosCriptograficos, ElementoBandeja, CertificadoRecibido, EstadoLaboratorio, IdLaboratorio, RespuestaApi, RespuestaEmision, RespuestaEntrega, Vista } from "@/types";
+import type { Certificado, CertificadoFirmado, DatosCriptograficos, ElementoBandeja, CertificadoRecibido, RespuestaApi, RespuestaEmision, RespuestaEntrega, Vista } from "@/types";
 import "./styles.css";
 
 export default function App() {
   const [tema, setTema] = useState<"dark" | "light">("dark");
   const [vista, setVista] = useState<Vista>("director");
-  const [laboratorioActivo, setLaboratorioActivo] = useState<IdLaboratorio>("lab1");
   const [estudiantes, setEstudiantes] = useState<string[]>([]);
   const [historial, setHistorial] = useState<CertificadoFirmado[]>([]);
   const [bandeja, setBandeja] = useState<ElementoBandeja[]>([]);
@@ -29,10 +27,6 @@ export default function App() {
   const [operacionPendiente, setOperacionPendiente] = useState("");
   const [nombreNuevoEstudiante, setNombreNuevoEstudiante] = useState("");
   const [formularioCertificado, setFormularioCertificado] = useState<Certificado>({ estudiante: "", curso: "", nota: 100, fecha: hoy() });
-  const [estadoLaboratorio, setEstadoLaboratorio] = useState<EstadoLaboratorio>({ entropiaPredecible: false });
-  const [victimaSeleccionada, setVictimaSeleccionada] = useState("");
-  const [cursoFalso, setCursoFalso] = useState("Certificado falsificado");
-  const [notaFalsa, setNotaFalsa] = useState(100);
   const [evidenciaDilithium, setEvidenciaDilithium] = useState<DatosCriptograficos | null>(null);
   const [evidenciaKyber, setEvidenciaKyber] = useState<DatosCriptograficos | null>(null);
   const [evidenciaVerificacion, setEvidenciaVerificacion] = useState<DatosCriptograficos | null>(null);
@@ -70,11 +64,6 @@ export default function App() {
     return items.length;
   }
 
-  async function refrescarEstadoLaboratorio() {
-    const datos = await peticionGet<{ entropiaPredecible: boolean }>("/laboratorios/1/estado");
-    setEstadoLaboratorio((actual) => ({ ...actual, entropiaPredecible: datos.entropiaPredecible }));
-  }
-
   useEffect(() => {
     document.documentElement.classList.toggle("light", tema === "light");
     queueMicrotask(() => {
@@ -87,7 +76,6 @@ export default function App() {
     Promise.all([
       refrescarEstudiantes(),
       refrescarHistorial(),
-      refrescarEstadoLaboratorio(),
       peticionGet<{ llavePublica: string }>("/universidad/llave-publica").then((d) => setLlavePublicaUniversidad(d.llavePublica)),
     ]).catch((error) => {
       toast.error("No se pudo cargar el estado inicial", { description: error instanceof Error ? error.message : "Error desconocido" });
@@ -248,77 +236,6 @@ export default function App() {
     }
   }
 
-  async function onToggleEntropiaPredecible(activo: boolean) {
-    setOperacionPendiente("lab1-toggle");
-    try {
-      await peticionPost<{ exito: boolean }>("/laboratorios/1/activar-rng-debil", { activo });
-      setEstadoLaboratorio((actual) => ({ ...actual, entropiaPredecible: activo }));
-      if (activo) {
-        toast.warning("Entropia predecible activada", { description: "Universidad reinicializada con semilla fija 12345." });
-      } else {
-        toast.info("Entropia predecible desactivada", { description: "La universidad usa entropia real nuevamente." });
-      }
-    } catch (error) {
-      toast.error("Error al cambiar entropia", { description: error instanceof Error ? error.message : "Error desconocido" });
-    } finally {
-      setOperacionPendiente("");
-    }
-  }
-
-  async function recuperarLlavePrivada() {
-    setOperacionPendiente("lab1-extract");
-    try {
-      const datos = await peticionPost<{ llavePrivada: string; llavePublica: string; semilla: number }>("/laboratorios/1/recuperar-llave-privada", {});
-      setEstadoLaboratorio((actual) => ({ ...actual, llavePrivadaRecuperada: datos.llavePrivada, llavePublicaRecuperada: datos.llavePublica }));
-      toast.warning("Clave privada regenerada", { description: `Semilla usada: ${datos.semilla}.` });
-    } catch (error) {
-      toast.error("Extraccion fallida", { description: error instanceof Error ? error.message : "Error desconocido" });
-    } finally {
-      setOperacionPendiente("");
-    }
-  }
-
-  async function firmarCertificadoFalso() {
-    if (!victimaSeleccionada) {
-      toast.error("Selecciona una victima");
-      return;
-    }
-    setOperacionPendiente("lab1-forge");
-    const cert = { estudiante: victimaSeleccionada, curso: cursoFalso, nota: notaFalsa, fecha: hoy() };
-    try {
-      const datos = await peticionPost<{ valido: boolean; firma: string }>("/laboratorios/1/firmar-certificado-falso", cert);
-      setEstadoLaboratorio((actual) => ({ ...actual, firmaFalsificada: datos.firma, entregaFalsaExitosa: false }));
-      toast.warning(datos.valido ? "Certificado falso aceptado" : "La falsificacion fallo", {
-        description: "La firma se genero con la clave regenerada.",
-      });
-    } catch (error) {
-      toast.error("Firma falsa fallida", { description: error instanceof Error ? error.message : "Error desconocido" });
-    } finally {
-      setOperacionPendiente("");
-    }
-  }
-
-  async function entregarCertificadoFalso() {
-    if (!victimaSeleccionada) {
-      toast.error("Selecciona una victima");
-      return;
-    }
-    setOperacionPendiente("lab1-deliver-forged");
-    const cert = { estudiante: victimaSeleccionada, curso: cursoFalso, nota: notaFalsa, fecha: hoy() };
-    try {
-      const datos = await peticionPost<{ exito: boolean; valido?: boolean; firma?: string; error?: string }>("/laboratorios/1/entregar-falso", cert);
-      if (!datos.exito) throw new Error(datos.error || "No se pudo entregar");
-      setEstadoLaboratorio((actual) => ({ ...actual, firmaFalsificada: datos.firma, entregaFalsaExitosa: true }));
-      toast.warning("Certificado falso entregado", {
-        description: `${victimaSeleccionada} ahora tiene un certificado falsificado en su bandeja.`,
-      });
-    } catch (error) {
-      toast.error("Entrega fallida", { description: error instanceof Error ? error.message : "Error desconocido" });
-    } finally {
-      setOperacionPendiente("");
-    }
-  }
-
   return (
     <main className="aplicacion">
       <div className="contenedor-app">
@@ -361,7 +278,6 @@ export default function App() {
               refrescarBandeja().catch(() => undefined);
             }}
           />
-          <BotonNavegacion activo={vista === "laboratorios"} icono={Fingerprint} etiqueta="Laboratorios" onClick={() => setVista("laboratorios")} />
         </nav>
 
         <AnimatePresence mode="wait">
@@ -402,27 +318,6 @@ export default function App() {
                 ultimoCertificadoRecibido={ultimoCertificadoRecibido}
                 evidenciaKyber={evidenciaKyber}
                 evidenciaVerificacion={evidenciaVerificacion}
-              />
-            </PanelAnimado>
-          ) : null}
-          {vista === "laboratorios" ? (
-            <PanelAnimado key="laboratorios">
-              <PanelLaboratorio
-                laboratorioActivo={laboratorioActivo}
-                onCambiarLaboratorio={setLaboratorioActivo}
-                operacionPendiente={operacionPendiente}
-                estadoLaboratorio={estadoLaboratorio}
-                onToggleEntropiaPredecible={onToggleEntropiaPredecible}
-                onRecuperarLlavePrivada={recuperarLlavePrivada}
-                onFirmarCertificadoFalso={firmarCertificadoFalso}
-                onEntregarCertificadoFalso={entregarCertificadoFalso}
-                estudiantes={estudiantes}
-                victimaSeleccionada={victimaSeleccionada}
-                onCambiarVictima={setVictimaSeleccionada}
-                cursoFalso={cursoFalso}
-                onCambiarCursoFalso={setCursoFalso}
-                notaFalsa={notaFalsa}
-                onCambiarNotaFalsa={setNotaFalsa}
               />
             </PanelAnimado>
           ) : null}

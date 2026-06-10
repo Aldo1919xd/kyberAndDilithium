@@ -1,7 +1,6 @@
 package com.test.demo.service;
 
 import com.test.demo.model.DatosCertificado;
-import com.test.demo.model.RandomSemillaFija;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.params.MLKEMPublicKeyParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -142,37 +141,6 @@ class ServicioUniversidadTests {
         servicio.firmarCertificado(new DatosCertificado("Alice", "Curso1", 80, "2025-01-01"));
         servicio.firmarCertificado(new DatosCertificado("Alice", "Curso2", 90, "2025-02-01"));
         assertEquals(2, servicio.obtenerTodosCertificados().size());
-    }
-
-    @Test
-    void reInicializarUniversidad_conRandomSemillaFija_verifica() throws Exception {
-        crearEstudiante("Alice");
-        DatosCertificado cert = new DatosCertificado("Alice", "Test", 85, "2025-06-01");
-
-        byte[] pubKeyOriginal = servicio.obtenerLlavePublicaUniversidad().clone();
-
-        RandomSemillaFija rs = new RandomSemillaFija(12345L);
-        servicio.reinicializarConRandom(rs);
-
-        byte[] pubKeyFija = servicio.obtenerLlavePublicaUniversidad().clone();
-
-        assertFalse(java.util.Arrays.equals(pubKeyOriginal, pubKeyFija),
-            "Keypair debe cambiar tras reinicializar");
-
-        RandomSemillaFija rs2 = new RandomSemillaFija(12345L);
-        ServicioUniversidad servicio2 = new ServicioUniversidad(servicioFirma, servicioCifrado);
-        servicio2.inicializarUniversidad();
-        crearEstudiante("Alice");
-        servicio2.reinicializarConRandom(rs2);
-
-        byte[] pubKeyFija2 = servicio2.obtenerLlavePublicaUniversidad();
-        assertArrayEquals(pubKeyFija, pubKeyFija2, "Misma semilla debe producir mismo keypair");
-
-        Map<String, Object> emitido = servicio.firmarCertificado(cert);
-        byte[] firma = org.bouncycastle.util.encoders.Hex.decodeStrict((String) emitido.get("firma"));
-
-        assertTrue(servicio.verificarFirmaCertificado(cert, firma),
-            "Firma debe verificar contra la llave posterior a reinicializar");
     }
 
 }

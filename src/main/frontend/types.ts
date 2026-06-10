@@ -1,5 +1,4 @@
-export type Vista = "director" | "estudiante" | "laboratorios";
-export type IdLaboratorio = "lab1";
+export type Vista = "director" | "estudiante";
 
 export type Certificado = {
   estudiante: string;
@@ -54,10 +53,4 @@ export type RespuestaApi = {
   error?: string;
 };
 
-export type EstadoLaboratorio = {
-  entropiaPredecible: boolean;
-  llavePrivadaRecuperada?: string;
-  llavePublicaRecuperada?: string;
-  firmaFalsificada?: string;
-  entregaFalsaExitosa?: boolean;
-};
+

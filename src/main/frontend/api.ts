@@ -3,7 +3,6 @@ import { ml_dsa65 } from "@noble/post-quantum/ml-dsa.js";
 
 const API = "/api";
 
-// ── llaves privadas locales (solo en memoria, nunca viajan) ──
 
 const llavesPrivadas = new Map<string, Uint8Array>();
 
@@ -19,7 +18,6 @@ export function obtenerLlavePrivada(nombre: string): Uint8Array | undefined {
   return llavesPrivadas.get(nombre);
 }
 
-// ── crypto local ──
 
 export async function descifrarConKyber(
   textoCifrado: Uint8Array,
@@ -53,7 +51,6 @@ export function aBytesCanonicos(cert: { estudiante: string; curso: string; nota:
   }));
 }
 
-// ── fetch helpers ──
 
 export async function peticionGet<T>(ruta: string): Promise<T> {
   const r = await fetch(API + ruta);
@@ -71,7 +68,6 @@ export async function peticionPost<T>(ruta: string, cuerpo: unknown): Promise<T>
   return r.json();
 }
 
-// ── helpers hex ──
 
 export function bytesToHex(b: Uint8Array): string {
   return Array.from(b).map((x) => x.toString(16).padStart(2, "0")).join("");

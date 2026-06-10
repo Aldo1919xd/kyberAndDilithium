@@ -69,30 +69,4 @@ class ServicioFirmaDilithiumTests {
         assertFalse(servicio.verificar(datos, firma, pub2));
     }
 
-    @Test
-    void firmaConRandomSemillaFija_esConsistente() {
-        com.test.demo.model.RandomSemillaFija rs1 = new com.test.demo.model.RandomSemillaFija(12345L);
-        com.test.demo.model.RandomSemillaFija rs2 = new com.test.demo.model.RandomSemillaFija(12345L);
-
-        AsymmetricCipherKeyPair par1 = servicio.generarParLlaves(rs1);
-        AsymmetricCipherKeyPair par2 = servicio.generarParLlaves(rs2);
-
-        byte[] pub1Enc = ((MLDSAPublicKeyParameters) par1.getPublic()).getEncoded();
-        byte[] pub2Enc = ((MLDSAPublicKeyParameters) par2.getPublic()).getEncoded();
-
-        assertArrayEquals(pub1Enc, pub2Enc, "Misma semilla debe producir mismo keypair");
-    }
-
-    @Test
-    void firmaConRandomSemillaFija_verifica() {
-        com.test.demo.model.RandomSemillaFija rs = new com.test.demo.model.RandomSemillaFija(12345L);
-        AsymmetricCipherKeyPair par = servicio.generarParLlaves(rs);
-        MLDSAPrivateKeyParameters priv = (MLDSAPrivateKeyParameters) par.getPrivate();
-        MLDSAPublicKeyParameters pub = (MLDSAPublicKeyParameters) par.getPublic();
-
-        byte[] datos = "datos".getBytes(StandardCharsets.UTF_8);
-        byte[] firma = servicio.firmar(datos, priv, rs);
-
-        assertTrue(servicio.verificar(datos, firma, pub));
-    }
 }
