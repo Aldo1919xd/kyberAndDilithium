@@ -1,9 +1,9 @@
 package com.test.demo.service;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.params.MLDSAPrivateKeyParameters;
+import org.bouncycastle.crypto.params.MLDSAPublicKeyParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPrivateKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPublicKeyParameters;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
@@ -23,15 +23,15 @@ class ServicioFirmaDilithiumTests {
     void generarParLlaves_creaParValido() {
         AsymmetricCipherKeyPair par = servicio.generarParLlaves();
         assertNotNull(par);
-        assertInstanceOf(DilithiumPublicKeyParameters.class, par.getPublic());
-        assertInstanceOf(DilithiumPrivateKeyParameters.class, par.getPrivate());
+        assertInstanceOf(MLDSAPublicKeyParameters.class, par.getPublic());
+        assertInstanceOf(MLDSAPrivateKeyParameters.class, par.getPrivate());
     }
 
     @Test
     void firmarYVerificar_roundtripExitoso() {
         AsymmetricCipherKeyPair par = servicio.generarParLlaves();
-        DilithiumPrivateKeyParameters priv = (DilithiumPrivateKeyParameters) par.getPrivate();
-        DilithiumPublicKeyParameters pub = (DilithiumPublicKeyParameters) par.getPublic();
+        MLDSAPrivateKeyParameters priv = (MLDSAPrivateKeyParameters) par.getPrivate();
+        MLDSAPublicKeyParameters pub = (MLDSAPublicKeyParameters) par.getPublic();
 
         byte[] datos = "datos del certificado".getBytes(StandardCharsets.UTF_8);
         byte[] firma = servicio.firmar(datos, priv);
@@ -45,8 +45,8 @@ class ServicioFirmaDilithiumTests {
     @Test
     void verificarFirmaIncorrecta_retornaFalso() {
         AsymmetricCipherKeyPair par = servicio.generarParLlaves();
-        DilithiumPrivateKeyParameters priv = (DilithiumPrivateKeyParameters) par.getPrivate();
-        DilithiumPublicKeyParameters pub = (DilithiumPublicKeyParameters) par.getPublic();
+        MLDSAPrivateKeyParameters priv = (MLDSAPrivateKeyParameters) par.getPrivate();
+        MLDSAPublicKeyParameters pub = (MLDSAPublicKeyParameters) par.getPublic();
 
         byte[] datos = "datos originales".getBytes(StandardCharsets.UTF_8);
         byte[] firma = servicio.firmar(datos, priv);
@@ -60,8 +60,8 @@ class ServicioFirmaDilithiumTests {
     void verificarConOtraLlave_retornaFalso() {
         AsymmetricCipherKeyPair par1 = servicio.generarParLlaves();
         AsymmetricCipherKeyPair par2 = servicio.generarParLlaves();
-        DilithiumPrivateKeyParameters priv1 = (DilithiumPrivateKeyParameters) par1.getPrivate();
-        DilithiumPublicKeyParameters pub2 = (DilithiumPublicKeyParameters) par2.getPublic();
+        MLDSAPrivateKeyParameters priv1 = (MLDSAPrivateKeyParameters) par1.getPrivate();
+        MLDSAPublicKeyParameters pub2 = (MLDSAPublicKeyParameters) par2.getPublic();
 
         byte[] datos = "datos".getBytes(StandardCharsets.UTF_8);
         byte[] firma = servicio.firmar(datos, priv1);
@@ -77,8 +77,8 @@ class ServicioFirmaDilithiumTests {
         AsymmetricCipherKeyPair par1 = servicio.generarParLlaves(rs1);
         AsymmetricCipherKeyPair par2 = servicio.generarParLlaves(rs2);
 
-        byte[] pub1Enc = ((DilithiumPublicKeyParameters) par1.getPublic()).getEncoded();
-        byte[] pub2Enc = ((DilithiumPublicKeyParameters) par2.getPublic()).getEncoded();
+        byte[] pub1Enc = ((MLDSAPublicKeyParameters) par1.getPublic()).getEncoded();
+        byte[] pub2Enc = ((MLDSAPublicKeyParameters) par2.getPublic()).getEncoded();
 
         assertArrayEquals(pub1Enc, pub2Enc, "Misma semilla debe producir mismo keypair");
     }
@@ -87,8 +87,8 @@ class ServicioFirmaDilithiumTests {
     void firmaConRandomSemillaFija_verifica() {
         com.test.demo.model.RandomSemillaFija rs = new com.test.demo.model.RandomSemillaFija(12345L);
         AsymmetricCipherKeyPair par = servicio.generarParLlaves(rs);
-        DilithiumPrivateKeyParameters priv = (DilithiumPrivateKeyParameters) par.getPrivate();
-        DilithiumPublicKeyParameters pub = (DilithiumPublicKeyParameters) par.getPublic();
+        MLDSAPrivateKeyParameters priv = (MLDSAPrivateKeyParameters) par.getPrivate();
+        MLDSAPublicKeyParameters pub = (MLDSAPublicKeyParameters) par.getPublic();
 
         byte[] datos = "datos".getBytes(StandardCharsets.UTF_8);
         byte[] firma = servicio.firmar(datos, priv, rs);

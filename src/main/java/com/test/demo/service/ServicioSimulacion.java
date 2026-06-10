@@ -5,8 +5,8 @@ import com.test.demo.model.PaqueteCifrado;
 import com.test.demo.model.RandomSemillaFija;
 import com.test.demo.util.UtilidadesCertificado;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPrivateKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPublicKeyParameters;
+import org.bouncycastle.crypto.params.MLDSAPrivateKeyParameters;
+import org.bouncycastle.crypto.params.MLDSAPublicKeyParameters;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.stereotype.Service;
 import java.util.LinkedHashMap;
@@ -46,8 +46,8 @@ public class ServicioSimulacion {
     public Map<String, Object> recuperarLlavePrivada() {
         RandomSemillaFija rs = obtenerRandomSemillaFija();
         AsymmetricCipherKeyPair par = servicioFirma.generarParLlaves(rs);
-        DilithiumPrivateKeyParameters priv = (DilithiumPrivateKeyParameters) par.getPrivate();
-        DilithiumPublicKeyParameters pub = (DilithiumPublicKeyParameters) par.getPublic();
+        MLDSAPrivateKeyParameters priv = (MLDSAPrivateKeyParameters) par.getPrivate();
+        MLDSAPublicKeyParameters pub = (MLDSAPublicKeyParameters) par.getPublic();
         return Map.of(
             "llavePrivada", Hex.toHexString(priv.getEncoded()),
             "llavePublica", Hex.toHexString(pub.getEncoded()),
@@ -58,8 +58,8 @@ public class ServicioSimulacion {
     public Map<String, Object> firmarCertificadoFalso(DatosCertificado cert) throws Exception {
         RandomSemillaFija rs = obtenerRandomSemillaFija();
         AsymmetricCipherKeyPair par = servicioFirma.generarParLlaves(rs);
-        DilithiumPrivateKeyParameters priv = (DilithiumPrivateKeyParameters) par.getPrivate();
-        DilithiumPublicKeyParameters pub = (DilithiumPublicKeyParameters) par.getPublic();
+        MLDSAPrivateKeyParameters priv = (MLDSAPrivateKeyParameters) par.getPrivate();
+        MLDSAPublicKeyParameters pub = (MLDSAPublicKeyParameters) par.getPublic();
 
         byte[] bytesCert = UtilidadesCertificado.aBytesCanonicos(cert);
         byte[] firma = servicioFirma.firmar(bytesCert, priv, rs);
@@ -82,8 +82,8 @@ public class ServicioSimulacion {
     public Map<String, Object> entregarCertificadoFalso(DatosCertificado cert) throws Exception {
         RandomSemillaFija rs = obtenerRandomSemillaFija();
         AsymmetricCipherKeyPair par = servicioFirma.generarParLlaves(rs);
-        DilithiumPrivateKeyParameters priv = (DilithiumPrivateKeyParameters) par.getPrivate();
-        DilithiumPublicKeyParameters pub = (DilithiumPublicKeyParameters) par.getPublic();
+        MLDSAPrivateKeyParameters priv = (MLDSAPrivateKeyParameters) par.getPrivate();
+        MLDSAPublicKeyParameters pub = (MLDSAPublicKeyParameters) par.getPublic();
 
         byte[] bytesCert = UtilidadesCertificado.aBytesCanonicos(cert);
         byte[] firma = servicioFirma.firmar(bytesCert, priv, rs);

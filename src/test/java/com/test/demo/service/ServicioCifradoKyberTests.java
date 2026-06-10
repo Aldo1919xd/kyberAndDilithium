@@ -2,9 +2,9 @@ package com.test.demo.service;
 
 import com.test.demo.model.PaqueteCifrado;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.params.MLKEMPrivateKeyParameters;
+import org.bouncycastle.crypto.params.MLKEMPublicKeyParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPrivateKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPublicKeyParameters;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
@@ -24,16 +24,16 @@ class ServicioCifradoKyberTests {
     void generarParLlaves_creaParValido() {
         AsymmetricCipherKeyPair par = servicio.generarParLlaves();
         assertNotNull(par);
-        assertInstanceOf(KyberPublicKeyParameters.class, par.getPublic());
-        assertInstanceOf(KyberPrivateKeyParameters.class, par.getPrivate());
-        assertTrue(((KyberPublicKeyParameters) par.getPublic()).getEncoded().length > 0);
+        assertInstanceOf(MLKEMPublicKeyParameters.class, par.getPublic());
+        assertInstanceOf(MLKEMPrivateKeyParameters.class, par.getPrivate());
+        assertTrue(((MLKEMPublicKeyParameters) par.getPublic()).getEncoded().length > 0);
     }
 
     @Test
     void cifrarYDescifrar_roundtripExitoso() throws Exception {
         AsymmetricCipherKeyPair par = servicio.generarParLlaves();
-        KyberPublicKeyParameters pub = (KyberPublicKeyParameters) par.getPublic();
-        KyberPrivateKeyParameters priv = (KyberPrivateKeyParameters) par.getPrivate();
+        MLKEMPublicKeyParameters pub = (MLKEMPublicKeyParameters) par.getPublic();
+        MLKEMPrivateKeyParameters priv = (MLKEMPrivateKeyParameters) par.getPrivate();
 
         byte[] original = "datos secretos del certificado".getBytes(StandardCharsets.UTF_8);
         PaqueteCifrado paquete = servicio.cifrar(original, pub);
@@ -52,8 +52,8 @@ class ServicioCifradoKyberTests {
     void descifrarConLlaveIncorrecta_lanzaExcepcion() throws Exception {
         AsymmetricCipherKeyPair par1 = servicio.generarParLlaves();
         AsymmetricCipherKeyPair par2 = servicio.generarParLlaves();
-        KyberPublicKeyParameters pub1 = (KyberPublicKeyParameters) par1.getPublic();
-        KyberPrivateKeyParameters priv2 = (KyberPrivateKeyParameters) par2.getPrivate();
+        MLKEMPublicKeyParameters pub1 = (MLKEMPublicKeyParameters) par1.getPublic();
+        MLKEMPrivateKeyParameters priv2 = (MLKEMPrivateKeyParameters) par2.getPrivate();
 
         byte[] original = "test".getBytes(StandardCharsets.UTF_8);
         PaqueteCifrado paquete = servicio.cifrar(original, pub1);
@@ -67,8 +67,8 @@ class ServicioCifradoKyberTests {
         java.security.SecureRandom rng2 = new java.security.SecureRandom();
 
         AsymmetricCipherKeyPair par = servicio.generarParLlaves();
-        KyberPublicKeyParameters pub = (KyberPublicKeyParameters) par.getPublic();
-        KyberPrivateKeyParameters priv = (KyberPrivateKeyParameters) par.getPrivate();
+        MLKEMPublicKeyParameters pub = (MLKEMPublicKeyParameters) par.getPublic();
+        MLKEMPrivateKeyParameters priv = (MLKEMPrivateKeyParameters) par.getPrivate();
 
         byte[] datos = "datos".getBytes(StandardCharsets.UTF_8);
         PaqueteCifrado paq1 = servicio.cifrar(datos, pub, rng1);

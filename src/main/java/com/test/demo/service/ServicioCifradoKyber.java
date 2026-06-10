@@ -3,13 +3,13 @@ package com.test.demo.service;
 import com.test.demo.model.PaqueteCifrado;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.SecretWithEncapsulation;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberKeyGenerationParameters;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberKeyPairGenerator;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberKEMExtractor;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberKEMGenerator;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberParameters;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPrivateKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPublicKeyParameters;
+import org.bouncycastle.crypto.generators.MLKEMKeyPairGenerator;
+import org.bouncycastle.crypto.kems.MLKEMExtractor;
+import org.bouncycastle.crypto.kems.MLKEMGenerator;
+import org.bouncycastle.crypto.params.MLKEMKeyGenerationParameters;
+import org.bouncycastle.crypto.params.MLKEMParameters;
+import org.bouncycastle.crypto.params.MLKEMPrivateKeyParameters;
+import org.bouncycastle.crypto.params.MLKEMPublicKeyParameters;
 import org.springframework.stereotype.Service;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
@@ -26,17 +26,17 @@ public class ServicioCifradoKyber {
     }
 
     public AsymmetricCipherKeyPair generarParLlaves(SecureRandom aleatorio) {
-        KyberKeyPairGenerator generador = new KyberKeyPairGenerator();
-        generador.init(new KyberKeyGenerationParameters(aleatorio, KyberParameters.kyber768));
+        MLKEMKeyPairGenerator generador = new MLKEMKeyPairGenerator();
+        generador.init(new MLKEMKeyGenerationParameters(aleatorio, MLKEMParameters.ml_kem_768));
         return generador.generateKeyPair();
     }
 
-    public PaqueteCifrado cifrar(byte[] datos, KyberPublicKeyParameters llavePublica) throws Exception {
+    public PaqueteCifrado cifrar(byte[] datos, MLKEMPublicKeyParameters llavePublica) throws Exception {
         return cifrar(datos, llavePublica, aleatorioSeguro);
     }
 
-    public PaqueteCifrado cifrar(byte[] datos, KyberPublicKeyParameters llavePublica, SecureRandom aleatorio) throws Exception {
-        KyberKEMGenerator generadorKem = new KyberKEMGenerator(aleatorio);
+    public PaqueteCifrado cifrar(byte[] datos, MLKEMPublicKeyParameters llavePublica, SecureRandom aleatorio) throws Exception {
+        MLKEMGenerator generadorKem = new MLKEMGenerator(aleatorio);
         SecretWithEncapsulation secreto = generadorKem.generateEncapsulated(llavePublica);
         byte[] secretoCompartido = secreto.getSecret();
         byte[] textoCifrado = secreto.getEncapsulation();
@@ -52,8 +52,8 @@ public class ServicioCifradoKyber {
         return new PaqueteCifrado(textoCifrado, iv, datosCifrados);
     }
 
-    public byte[] descifrar(PaqueteCifrado paquete, KyberPrivateKeyParameters llavePrivada) throws Exception {
-        KyberKEMExtractor extractor = new KyberKEMExtractor(llavePrivada);
+    public byte[] descifrar(PaqueteCifrado paquete, MLKEMPrivateKeyParameters llavePrivada) throws Exception {
+        MLKEMExtractor extractor = new MLKEMExtractor(llavePrivada);
         byte[] secretoCompartido = extractor.extractSecret(paquete.textoCifrado());
 
         Cipher cifrador = Cipher.getInstance("AES/GCM/NoPadding");

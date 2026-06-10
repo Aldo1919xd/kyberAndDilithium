@@ -1,13 +1,14 @@
 package com.test.demo.service;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.CryptoException;
+import org.bouncycastle.crypto.generators.MLDSAKeyPairGenerator;
+import org.bouncycastle.crypto.params.MLDSAKeyGenerationParameters;
+import org.bouncycastle.crypto.params.MLDSAParameters;
+import org.bouncycastle.crypto.params.MLDSAPrivateKeyParameters;
+import org.bouncycastle.crypto.params.MLDSAPublicKeyParameters;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumKeyGenerationParameters;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumKeyPairGenerator;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumParameters;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPrivateKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPublicKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumSigner;
+import org.bouncycastle.crypto.signers.MLDSASigner;
 import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 
@@ -21,24 +22,30 @@ public class ServicioFirmaDilithium {
     }
 
     public AsymmetricCipherKeyPair generarParLlaves(SecureRandom aleatorio) {
-        DilithiumKeyPairGenerator generator = new DilithiumKeyPairGenerator();
-        generator.init(new DilithiumKeyGenerationParameters(aleatorio, DilithiumParameters.dilithium3));
+        MLDSAKeyPairGenerator generator = new MLDSAKeyPairGenerator();
+        generator.init(new MLDSAKeyGenerationParameters(aleatorio, MLDSAParameters.ml_dsa_65));
         return generator.generateKeyPair();
     }
 
-    public byte[] firmar(byte[] datos, DilithiumPrivateKeyParameters llavePrivada) {
+    public byte[] firmar(byte[] datos, MLDSAPrivateKeyParameters llavePrivada) {
         return firmar(datos, llavePrivada, aleatorioSeguro);
     }
 
-    public byte[] firmar(byte[] datos, DilithiumPrivateKeyParameters llavePrivada, SecureRandom aleatorio) {
-        DilithiumSigner firmador = new DilithiumSigner();
+    public byte[] firmar(byte[] datos, MLDSAPrivateKeyParameters llavePrivada, SecureRandom aleatorio) {
+        MLDSASigner firmador = new MLDSASigner();
         firmador.init(true, new ParametersWithRandom(llavePrivada, aleatorio));
-        return firmador.generateSignature(datos);
+        firmador.update(datos, 0, datos.length);
+        try {
+            return firmador.generateSignature();
+        } catch (CryptoException e) {
+            throw new IllegalStateException("No se pudo generar la firma Dilithium3", e);
+        }
     }
 
-    public boolean verificar(byte[] datos, byte[] firma, DilithiumPublicKeyParameters llavePublica) {
-        DilithiumSigner firmador = new DilithiumSigner();
+    public boolean verificar(byte[] datos, byte[] firma, MLDSAPublicKeyParameters llavePublica) {
+        MLDSASigner firmador = new MLDSASigner();
         firmador.init(false, llavePublica);
-        return firmador.verifySignature(datos, firma);
+        firmador.update(datos, 0, datos.length);
+        return firmador.verifySignature(firma);
     }
 }

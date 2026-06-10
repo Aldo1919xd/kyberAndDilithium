@@ -3,8 +3,8 @@ package com.test.demo.service;
 import com.test.demo.model.DatosCertificado;
 import com.test.demo.model.RandomSemillaFija;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.params.MLKEMPublicKeyParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPublicKeyParameters;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,7 @@ class ServicioUniversidadTests {
     private static byte[] generarLlavePublicaEstudiante() {
         ServicioCifradoKyber cs = new ServicioCifradoKyber();
         AsymmetricCipherKeyPair par = cs.generarParLlaves();
-        return ((KyberPublicKeyParameters) par.getPublic()).getEncoded();
+        return ((MLKEMPublicKeyParameters) par.getPublic()).getEncoded();
     }
 
     private void crearEstudiante(String nombre) {

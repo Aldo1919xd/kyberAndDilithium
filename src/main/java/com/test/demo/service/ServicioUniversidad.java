@@ -5,10 +5,10 @@ import com.test.demo.model.PaqueteCifrado;
 import com.test.demo.util.UtilidadesCertificado;
 import jakarta.annotation.PostConstruct;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPrivateKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.dilithium.DilithiumPublicKeyParameters;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberParameters;
-import org.bouncycastle.pqc.crypto.crystals.kyber.KyberPublicKeyParameters;
+import org.bouncycastle.crypto.params.MLDSAPrivateKeyParameters;
+import org.bouncycastle.crypto.params.MLDSAPublicKeyParameters;
+import org.bouncycastle.crypto.params.MLKEMParameters;
+import org.bouncycastle.crypto.params.MLKEMPublicKeyParameters;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
@@ -26,11 +26,11 @@ public class ServicioUniversidad {
     private final ServicioFirmaDilithium servicioFirma;
     private final ServicioCifradoKyber servicioCifrado;
 
-    private DilithiumPublicKeyParameters llavePublicaUniversidad;
-    private DilithiumPrivateKeyParameters llavePrivadaUniversidad;
+    private MLDSAPublicKeyParameters llavePublicaUniversidad;
+    private MLDSAPrivateKeyParameters llavePrivadaUniversidad;
     private boolean inicializada = false;
 
-    private final ConcurrentHashMap<String, KyberPublicKeyParameters> llavesPublicasEstudiantes = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, MLKEMPublicKeyParameters> llavesPublicasEstudiantes = new ConcurrentHashMap<>();
     private final List<Map<String, Object>> certificadosEmitidos = new ArrayList<>();
     private final ConcurrentHashMap<String, List<Map<String, Object>>> bandejas = new ConcurrentHashMap<>();
 
@@ -48,15 +48,15 @@ public class ServicioUniversidad {
 
     public synchronized void inicializarUniversidad() {
         AsymmetricCipherKeyPair par = servicioFirma.generarParLlaves();
-        llavePublicaUniversidad = (DilithiumPublicKeyParameters) par.getPublic();
-        llavePrivadaUniversidad = (DilithiumPrivateKeyParameters) par.getPrivate();
+        llavePublicaUniversidad = (MLDSAPublicKeyParameters) par.getPublic();
+        llavePrivadaUniversidad = (MLDSAPrivateKeyParameters) par.getPrivate();
         inicializada = true;
     }
 
     public synchronized void reinicializarConRandom(java.security.SecureRandom aleatorio) {
         AsymmetricCipherKeyPair par = servicioFirma.generarParLlaves(aleatorio);
-        llavePublicaUniversidad = (DilithiumPublicKeyParameters) par.getPublic();
-        llavePrivadaUniversidad = (DilithiumPrivateKeyParameters) par.getPrivate();
+        llavePublicaUniversidad = (MLDSAPublicKeyParameters) par.getPublic();
+        llavePrivadaUniversidad = (MLDSAPrivateKeyParameters) par.getPrivate();
         inicializada = true;
     }
 
@@ -69,7 +69,7 @@ public class ServicioUniversidad {
     }
 
     public void registrarEstudiante(String nombre, byte[] llavePublica) {
-        KyberPublicKeyParameters llave = new KyberPublicKeyParameters(KyberParameters.kyber768, llavePublica);
+        MLKEMPublicKeyParameters llave = new MLKEMPublicKeyParameters(MLKEMParameters.ml_kem_768, llavePublica);
         llavesPublicasEstudiantes.put(nombre, llave);
     }
 
@@ -78,7 +78,7 @@ public class ServicioUniversidad {
     }
 
     public String obtenerLlavePublicaEstudianteHex(String nombre) {
-        KyberPublicKeyParameters llave = llavesPublicasEstudiantes.get(nombre);
+        MLKEMPublicKeyParameters llave = llavesPublicasEstudiantes.get(nombre);
         if (llave == null) return "";
         return Hex.toHexString(llave.getEncoded());
     }
@@ -159,7 +159,7 @@ public class ServicioUniversidad {
     }
 
     public PaqueteCifrado cifrarParaEstudiante(String nombreEstudiante, DatosCertificado cert) throws Exception {
-        KyberPublicKeyParameters llavePublica = llavesPublicasEstudiantes.get(nombreEstudiante);
+        MLKEMPublicKeyParameters llavePublica = llavesPublicasEstudiantes.get(nombreEstudiante);
         if (llavePublica == null) throw new IllegalArgumentException("Estudiante no encontrado: " + nombreEstudiante);
         byte[] bytesCert = UtilidadesCertificado.aBytesCanonicos(cert);
         return servicioCifrado.cifrar(bytesCert, llavePublica);

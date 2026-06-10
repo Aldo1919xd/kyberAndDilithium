@@ -11,7 +11,7 @@ import { PanelDirector } from "@/components/PanelDirector";
 import { PanelEstudiante } from "@/components/PanelEstudiante";
 import { PanelLaboratorio } from "@/components/PanelLaboratorio";
 import { PanelInfoPQC } from "@/components/PanelInfoPQC";
-import { peticionGet, peticionPost, generarParKyber, guardarLlavePrivada, obtenerLlavePrivada, descifrarConKyber, verificarFirmaDilithium, aBytesCanonicos, bytesToHex, hexToBytes } from "@/api";
+import { peticionGet, peticionPost, generarParKyber, guardarLlavePrivada, obtenerLlavePrivada, descifrarConKyber, verificarFirmaDilithium, bytesToHex, hexToBytes } from "@/api";
 import { hoy } from "@/lib/ayudantes";
 import type { Certificado, CertificadoFirmado, DatosCriptograficos, ElementoBandeja, CertificadoRecibido, EstadoLaboratorio, IdLaboratorio, RespuestaApi, RespuestaEmision, RespuestaEntrega, Vista } from "@/types";
 import "./styles.css";
@@ -128,6 +128,7 @@ export default function App() {
     setOperacionPendiente("issue");
     try {
       const datos = await peticionPost<RespuestaEmision>("/certificado/emitir", formularioCertificado);
+      if (datos.llavePublicaUniversidad) setLlavePublicaUniversidad(datos.llavePublicaUniversidad);
       setUltimoCertificadoFirmado(datos.certificado!);
       setEvidenciaDilithium({
         algoritmo: "Dilithium3",
@@ -215,9 +216,8 @@ export default function App() {
       const datosCifrados = hexToBytes(item.datosCifrados || "");
       const firma = hexToBytes(item.firma || "");
 
-      await descifrarConKyber(textoCifrado, iv, datosCifrados, llavePrivada);
+      const certCanonico = await descifrarConKyber(textoCifrado, iv, datosCifrados, llavePrivada);
 
-      const certCanonico = aBytesCanonicos(item.certificado);
       const llavePub = hexToBytes(llavePublicaUniversidad);
       const valido = verificarFirmaDilithium(certCanonico, firma, llavePub);
 
